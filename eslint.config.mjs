@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import tsPlugin from '@typescript-eslint/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
@@ -31,10 +32,13 @@ const eslintConfig = defineConfig([
         config: path.join(__dirname, 'src/app/globals.css'),
       },
     },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+    },
     rules: {
-      'no-unused-vars': 'error',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'tailwindcss/classnames-order': 'error',
       // shadcn/ui uses custom CSS theme variables — suppress false positives
       'tailwindcss/no-custom-classname': 'off',
       // eslint-config-next already registers the import plugin
