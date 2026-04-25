@@ -1,63 +1,63 @@
 /**
  * @jest-environment jsdom
  */
-import * as React from "react";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { Button } from "../button";
+import * as React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Button } from '../button';
 
-describe("Button", () => {
-  it("displays its label text", () => {
+describe('Button', () => {
+  it('displays its label text', () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole("button", { name: "Click me" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Click me' })).toBeTruthy();
   });
 
-  it("is accessible via button role", () => {
+  it('is accessible via button role', () => {
     render(<Button>Submit</Button>);
-    expect(screen.getByRole("button")).toBeTruthy();
+    expect(screen.getByRole('button')).toBeTruthy();
   });
 
-  it("is disabled when the disabled prop is set", () => {
+  it('is disabled when the disabled prop is set', () => {
     render(<Button disabled>Disabled</Button>);
-    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByRole('button')).toBeDisabled();
   });
 
-  it("calls onClick handler when clicked", async () => {
+  it('calls onClick handler when clicked', async () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it("renders destructive variant without error", () => {
+  it('renders destructive variant without error', () => {
     render(<Button variant="destructive">Delete</Button>);
-    expect(screen.getByRole("button", { name: "Delete" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
   });
 
-  it("renders outline variant without error", () => {
+  it('renders outline variant without error', () => {
     render(<Button variant="outline">Cancel</Button>);
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
   });
 
-  it("renders ghost variant without error", () => {
+  it('renders ghost variant without error', () => {
     render(<Button variant="ghost">Ghost</Button>);
-    expect(screen.getByRole("button", { name: "Ghost" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ghost' })).toBeTruthy();
   });
 
-  it("renders small size without error", () => {
+  it('renders small size without error', () => {
     render(<Button size="sm">Small</Button>);
-    expect(screen.getByRole("button", { name: "Small" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Small' })).toBeTruthy();
   });
 
-  it("renders large size without error", () => {
+  it('renders large size without error', () => {
     render(<Button size="lg">Large</Button>);
-    expect(screen.getByRole("button", { name: "Large" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Large' })).toBeTruthy();
   });
 
-  it("AC3: applies Tailwind classes to the rendered element", () => {
+  it('AC3: applies Tailwind classes to the rendered element', () => {
     const { container } = render(<Button>Tailwind</Button>);
     const el = container.firstChild as HTMLElement;
-    expect(el.className).toContain("inline-flex");
-    expect(el.className).toContain("rounded-md");
+    expect(el.className).toContain('inline-flex');
+    expect(el.className).toContain('rounded-md');
   });
 });
