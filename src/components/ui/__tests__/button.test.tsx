@@ -53,4 +53,11 @@ describe("Button", () => {
     render(<Button size="lg">Large</Button>);
     expect(screen.getByRole("button", { name: "Large" })).toBeTruthy();
   });
+
+  it("AC3: applies Tailwind classes to the rendered element", () => {
+    const { container } = render(<Button>Tailwind</Button>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.className).toContain("inline-flex");
+    expect(el.className).toContain("rounded-md");
+  });
 });
