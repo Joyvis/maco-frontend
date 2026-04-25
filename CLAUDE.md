@@ -36,6 +36,16 @@ npm test         # Jest unit tests
 - Add new shadcn/ui components via `npx shadcn@latest add <component>` — never edit `src/components/ui/` manually
 - Copy `.env.example` to `.env.local` before running locally; `src/config/env.ts` throws at startup if vars are missing/invalid
 
+## App Shell (MACO-58)
+
+- **Dashboard layout**: `src/app/(dashboard)/layout.tsx` — wraps all protected routes with `PermissionsProvider`, `TooltipProvider`, `Sidebar`, and `Topbar`
+- **Root layout**: wraps app with `ThemeProvider` (next-themes, `storageKey="maco-theme"`) and `Toaster` (sonner, bottom-right, 5s duration)
+- **Navigation config**: `src/config/navigation.ts` exports `NAV_ITEMS` and `SEGMENT_LABELS`; each nav item has an optional `requiredPermission` field
+- **Permissions**: `src/providers/permissions-provider.tsx` — mock provider; replace with real auth integration in a future ticket
+- **Sidebar collapse**: state persisted in `localStorage` under key `maco-sidebar-state`; initialized via lazy `useState` (not `useEffect`) to avoid ESLint `react-hooks/set-state-in-effect`
+- **DataTable** (`src/components/common/data-table.tsx`): built on `@tanstack/react-table` v8 — React Compiler emits a warning for `useReactTable` (known library incompatibility, not a bug)
+- **Common components**: `page-header`, `empty-state`, `breadcrumbs`, `data-table`, `confirm-dialog`, `loading-skeleton`, `error-boundary` all live in `src/components/common/`
+
 ## CI Pipeline
 
 GitHub Actions workflow at `.github/workflows/ci.yml` runs on push/PR to `main`:
