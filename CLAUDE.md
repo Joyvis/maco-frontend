@@ -46,8 +46,6 @@ lint → type-check → test → build
 
 Jobs run sequentially with `needs:` dependencies; any failure skips downstream jobs. Concurrency group per branch cancels redundant PR runs.
 
-## Commands
-
 | Command                | Description                 |
 | ---------------------- | --------------------------- |
 | `npm run lint`         | ESLint                      |
