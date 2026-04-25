@@ -9,16 +9,8 @@ import { NAV_ITEMS } from '@/config/navigation';
 import { usePermissions } from '@/providers/permissions-provider';
 import type { NavItem } from '@/types/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const STORAGE_KEY = 'maco-sidebar-state';
 
@@ -44,14 +36,20 @@ export function useSidebarState() {
   return { collapsed, toggle };
 }
 
-function NavGroup({ item, collapsed, pathname }: { item: NavItem; collapsed: boolean; pathname: string }) {
+function NavGroup({
+  item,
+  collapsed,
+  pathname,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  pathname: string;
+}) {
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
   const Icon = item.icon;
 
   if (!item.children) {
-    return (
-      <NavLink item={item} collapsed={collapsed} pathname={pathname} />
-    );
+    return <NavLink item={item} collapsed={collapsed} pathname={pathname} />;
   }
 
   if (collapsed) {
@@ -103,7 +101,15 @@ function NavGroup({ item, collapsed, pathname }: { item: NavItem; collapsed: boo
   );
 }
 
-function NavLink({ item, collapsed, pathname }: { item: NavItem; collapsed: boolean; pathname: string }) {
+function NavLink({
+  item,
+  collapsed,
+  pathname,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  pathname: string;
+}) {
   const isActive = pathname === item.href;
   const Icon = item.icon;
 
@@ -151,7 +157,12 @@ export function SidebarContent({ collapsed }: { collapsed: boolean }) {
       )}
       data-testid="sidebar-content"
     >
-      <div className={cn('flex h-14 items-center border-b border-sidebar-border px-3', collapsed && 'justify-center')}>
+      <div
+        className={cn(
+          'flex h-14 items-center border-b border-sidebar-border px-3',
+          collapsed && 'justify-center'
+        )}
+      >
         {!collapsed && (
           <span className="text-base font-semibold text-sidebar-foreground">Maco</span>
         )}
@@ -179,7 +190,9 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         aria-label="Main navigation"
       >
         <SidebarContent collapsed={collapsed} />
-        <div className={cn('border-t border-sidebar-border p-2', collapsed && 'flex justify-center')}>
+        <div
+          className={cn('border-t border-sidebar-border p-2', collapsed && 'flex justify-center')}
+        >
           <Button
             variant="ghost"
             size="icon-sm"
@@ -199,8 +212,12 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             className="fixed inset-0 bg-black/50"
             onClick={onMobileClose}
             aria-hidden="true"
+            data-testid="mobile-drawer-overlay"
           />
-          <aside className="relative flex flex-col w-64 h-full border-r border-sidebar-border" aria-label="Main navigation">
+          <aside
+            className="relative flex flex-col w-64 h-full border-r border-sidebar-border"
+            aria-label="Main navigation"
+          >
             <SidebarContent collapsed={false} />
           </aside>
         </div>

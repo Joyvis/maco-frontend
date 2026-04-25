@@ -48,7 +48,12 @@ describe('ConfirmDialog', () => {
 
   it('shows loading state while onConfirm executes', async () => {
     let resolve: () => void;
-    const onConfirm = jest.fn(() => new Promise<void>((r) => { resolve = r; }));
+    const onConfirm = jest.fn(
+      () =>
+        new Promise<void>((r) => {
+          resolve = r;
+        })
+    );
     render(
       <ConfirmDialog
         title="Delete item"

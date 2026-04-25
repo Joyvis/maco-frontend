@@ -70,7 +70,9 @@ export function DataTable<TData>({
     globalFilterFn: searchColumn
       ? (row, _colId, value: string) => {
           const cellValue = row.getValue(searchColumn);
-          return String(cellValue ?? '').toLowerCase().includes(value.toLowerCase());
+          return String(cellValue ?? '')
+            .toLowerCase()
+            .includes(value.toLowerCase());
         }
       : undefined,
   });
@@ -132,7 +134,10 @@ export function DataTable<TData>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   Nenhum resultado encontrado.
                 </TableCell>
               </TableRow>

@@ -17,13 +17,27 @@ describe('EmptyState', () => {
   });
 
   it('renders CTA button with actionLabel', () => {
-    render(<EmptyState title="No items" description="Nothing" actionLabel="Add item" onAction={jest.fn()} />);
+    render(
+      <EmptyState
+        title="No items"
+        description="Nothing"
+        actionLabel="Add item"
+        onAction={jest.fn()}
+      />
+    );
     expect(screen.getByRole('button', { name: 'Add item' })).toBeInTheDocument();
   });
 
   it('calls onAction when CTA button is clicked', async () => {
     const onAction = jest.fn();
-    render(<EmptyState title="No items" description="Nothing" actionLabel="Add item" onAction={onAction} />);
+    render(
+      <EmptyState
+        title="No items"
+        description="Nothing"
+        actionLabel="Add item"
+        onAction={onAction}
+      />
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Add item' }));
     expect(onAction).toHaveBeenCalledTimes(1);
   });

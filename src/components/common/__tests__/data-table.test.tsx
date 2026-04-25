@@ -48,7 +48,9 @@ describe('DataTable', () => {
     render(<DataTable columns={columns} data={data} searchColumn="name" pageSize={20} />);
     const input = screen.getByPlaceholderText(/filtrar/i);
     await userEvent.type(input, 'Item 1');
-    const rows = screen.getAllByRole('row');
-    expect(rows.length).toBeGreaterThan(1);
+    // matches Item 1, Item 10–15 = 7 rows; non-matching rows should be absent
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+    expect(screen.queryByText('Item 2')).not.toBeInTheDocument();
+    expect(screen.queryByText('Item 9')).not.toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { Permission } from '@/types/permissions';
+import { MOCK_PERMISSIONS } from '@/config/mock-permissions';
 
 interface PermissionsContextValue {
   permissions: Permission[];
@@ -9,18 +10,6 @@ interface PermissionsContextValue {
 }
 
 const PermissionsContext = createContext<PermissionsContextValue | null>(null);
-
-const MOCK_PERMISSIONS: Permission[] = [
-  'dashboard:read',
-  'orders:read',
-  'orders:write',
-  'catalog:read',
-  'catalog:write',
-  'team:read',
-  'team:manage',
-  'settings:read',
-  'settings:admin',
-];
 
 interface PermissionsProviderProps {
   children: React.ReactNode;

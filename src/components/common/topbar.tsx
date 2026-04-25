@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Menu, Sun, Moon, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,10 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+function signOut() {
+  // stub — replace with real auth signOut in future ticket
+}
+
 interface TopbarProps {
   tenantName?: string;
   onMenuClick?: () => void;
@@ -45,18 +49,16 @@ interface TopbarProps {
 
 export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
   const { theme, setTheme } = useTheme();
-  const [themeMode, setThemeMode] = useState<ThemeKey>(
-    (theme as ThemeKey | undefined) ?? 'system'
-  );
+  const router = useRouter();
+  const currentTheme = (theme as ThemeKey | undefined) ?? 'system';
 
   function cycleTheme() {
     const order: ThemeKey[] = ['light', 'dark', 'system'];
-    const next = order[(order.indexOf(themeMode) + 1) % order.length] ?? 'system';
-    setThemeMode(next);
+    const next = order[(order.indexOf(currentTheme) + 1) % order.length] ?? 'system';
     setTheme(next);
   }
 
-  const ThemeIcon = THEME_ICONS[themeMode];
+  const ThemeIcon = THEME_ICONS[currentTheme];
 
   return (
     <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
@@ -72,7 +74,9 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
       </Button>
 
       {/* Tenant name (left) */}
-      <span className="hidden md:block text-sm font-medium text-muted-foreground">{tenantName}</span>
+      <span className="hidden md:block text-sm font-medium text-muted-foreground">
+        {tenantName}
+      </span>
 
       {/* Breadcrumbs */}
       <div className="flex-1">
@@ -86,7 +90,7 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
           variant="ghost"
           size="icon-sm"
           onClick={cycleTheme}
-          aria-label={`Switch theme (current: ${themeMode})`}
+          aria-label={`Switch theme (current: ${currentTheme})`}
         >
           <ThemeIcon className="size-4" />
         </Button>
@@ -96,7 +100,9 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label="User menu">
               <Avatar size="sm">
-                {MOCK_USER.imageUrl && <AvatarImage src={MOCK_USER.imageUrl} alt={MOCK_USER.name} />}
+                {MOCK_USER.imageUrl && (
+                  <AvatarImage src={MOCK_USER.imageUrl} alt={MOCK_USER.name} />
+                )}
                 <AvatarFallback>{getInitials(MOCK_USER.name)}</AvatarFallback>
               </Avatar>
             </Button>
@@ -109,8 +115,13 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
               <Link href="/configuracoes">Configurações</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/login">Sair</Link>
+            <DropdownMenuItem
+              onSelect={() => {
+                signOut();
+                router.push('/login');
+              }}
+            >
+              Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

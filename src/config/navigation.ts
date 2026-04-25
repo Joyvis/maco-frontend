@@ -1,10 +1,4 @@
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
-  Users,
-  Settings,
-} from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings } from 'lucide-react';
 import type { NavItem } from '@/types/navigation';
 
 export const NAV_ITEMS: NavItem[] = [
