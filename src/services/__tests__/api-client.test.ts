@@ -43,7 +43,7 @@ describe('AC-1: GET request URL and response type', () => {
     const result = await apiClient.get<{ id: string }>('/path');
     expect(fetch).toHaveBeenCalledWith(
       `${BASE_URL}/path`,
-      expect.objectContaining({ method: 'GET' }),
+      expect.objectContaining({ method: 'GET' })
     );
     expect(result).toEqual({ data: { id: '1' } });
   });
@@ -60,7 +60,7 @@ describe('AC-2: POST with JSON body and Content-Type', () => {
         method: 'POST',
         body: JSON.stringify({ name: 'test' }),
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
-      }),
+      })
     );
   });
 });
@@ -81,7 +81,7 @@ describe('AC-3: HTTP methods map correctly', () => {
     }
     expect(fetch).toHaveBeenCalledWith(
       `${BASE_URL}/x`,
-      expect.objectContaining({ method: httpMethod }),
+      expect.objectContaining({ method: httpMethod })
     );
   });
 });
@@ -101,7 +101,7 @@ describe('AC-4: Authorization header when authenticated', () => {
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer my-jwt-token' }),
-      }),
+      })
     );
   });
 });
@@ -121,7 +121,7 @@ describe('AC-5: X-Tenant-Id header from auth context', () => {
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({ 'X-Tenant-Id': 'tenant-123' }),
-      }),
+      })
     );
   });
 });
@@ -252,6 +252,8 @@ describe('AC-12: 5xx throws generic error', () => {
 describe('AC-13: Network error throws typed error', () => {
   it('throws with "Network error" message on fetch failure', async () => {
     global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(apiClient.get('/offline')).rejects.toThrow('Network error. Check your connection.');
+    await expect(apiClient.get('/offline')).rejects.toThrow(
+      'Network error. Check your connection.'
+    );
   });
 });

@@ -17,7 +17,7 @@ interface PaginatedQueryOptions {
 export function usePaginatedQuery<T>(
   keyFactory: (params: PaginationParams) => readonly unknown[],
   fetcher: (params: PaginationParams) => Promise<PaginatedResponse<T>>,
-  options: PaginatedQueryOptions = {},
+  options: PaginatedQueryOptions = {}
 ) {
   const { initialPage = 1, pageSize = 10 } = options;
   const [page, setPage] = useState(initialPage);

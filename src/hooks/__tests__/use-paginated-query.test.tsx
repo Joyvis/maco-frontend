@@ -25,13 +25,11 @@ describe('AC-20: usePaginatedQuery returns data, meta, isLoading, page, setPage'
       meta: { total: 5, page: 1, page_size: 2 },
     };
     const fetcher = jest.fn().mockResolvedValue(mockData);
-    const keyFactory = (params: { page: number; page_size: number }) =>
-      ['items', params] as const;
+    const keyFactory = (params: { page: number; page_size: number }) => ['items', params] as const;
 
-    const { result } = renderHook(
-      () => usePaginatedQuery(keyFactory, fetcher, { pageSize: 2 }),
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => usePaginatedQuery(keyFactory, fetcher, { pageSize: 2 }), {
+      wrapper: makeWrapper(),
+    });
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.page).toBe(1);
@@ -54,13 +52,11 @@ describe('AC-20: usePaginatedQuery returns data, meta, isLoading, page, setPage'
       meta: { total: 4, page: 2, page_size: 2 },
     };
     const fetcher = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
-    const keyFactory = (params: { page: number; page_size: number }) =>
-      ['items', params] as const;
+    const keyFactory = (params: { page: number; page_size: number }) => ['items', params] as const;
 
-    const { result } = renderHook(
-      () => usePaginatedQuery(keyFactory, fetcher, { pageSize: 2 }),
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => usePaginatedQuery(keyFactory, fetcher, { pageSize: 2 }), {
+      wrapper: makeWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.page).toBe(1);

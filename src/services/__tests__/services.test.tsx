@@ -41,7 +41,11 @@ describe('AC-17: serviceKeys factory', () => {
   });
 
   it('list(filters) appends filters', () => {
-    expect(serviceKeys.list({ status: 'active' })).toEqual(['services', 'list', { status: 'active' }]);
+    expect(serviceKeys.list({ status: 'active' })).toEqual([
+      'services',
+      'list',
+      { status: 'active' },
+    ]);
   });
 
   it('details() returns detail key', () => {
@@ -109,7 +113,7 @@ describe('AC-19: useCreateService invalidates services list on success', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: serviceKeys.lists() }),
+      expect.objectContaining({ queryKey: serviceKeys.lists() })
     );
   });
 });

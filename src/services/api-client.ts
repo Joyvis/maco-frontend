@@ -65,12 +65,14 @@ async function attemptTokenRefresh(): Promise<string | null> {
   }
 }
 
+export type QueryParams = Record<string, string | number | boolean | undefined>;
+
 // ─── Core request ──────────────────────────────────────────────────────────────
 async function request<T>(
   method: string,
   path: string,
-  options: { params?: Record<string, unknown>; body?: unknown } = {},
-  isRetry = false,
+  options: { params?: QueryParams; body?: unknown } = {},
+  isRetry = false
 ): Promise<T> {
   const { params, body } = options;
   const baseUrl = env.NEXT_PUBLIC_API_URL;
@@ -80,7 +82,7 @@ async function request<T>(
     const search = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null)
-        .map(([k, v]) => [k, String(v)]),
+        .map(([k, v]) => [k, String(v)])
     );
     url = `${url}?${search.toString()}`;
   }
@@ -143,7 +145,7 @@ async function request<T>(
 
 // ─── Public API client ─────────────────────────────────────────────────────────
 export const apiClient = {
-  get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+  get<T>(path: string, params?: QueryParams): Promise<T> {
     return request<T>('GET', path, { params });
   },
 

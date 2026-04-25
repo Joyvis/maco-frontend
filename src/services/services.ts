@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
+import type { QueryParams } from '@/services/api-client';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 
 // ─── Service type (stub — replace with generated schema type when available) ───
@@ -28,7 +29,7 @@ export const serviceKeys = {
 export function useServices(filters: ServiceFilters) {
   const { data, ...rest } = useQuery({
     queryKey: serviceKeys.list(filters),
-    queryFn: () => apiClient.get<PaginatedResponse<Service>>('/services', filters as Record<string, unknown>),
+    queryFn: () => apiClient.get<PaginatedResponse<Service>>('/services', filters as QueryParams),
   });
 
   return {
@@ -49,8 +50,7 @@ export function useService(id: string) {
 export function useCreateService() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Service>) =>
-      apiClient.post<ApiResponse<Service>>('/services', data),
+    mutationFn: (data: Partial<Service>) => apiClient.post<ApiResponse<Service>>('/services', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
     },
