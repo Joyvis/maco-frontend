@@ -1,0 +1,161 @@
+import { env } from '@/config/env';
+import type { ApiError } from '@/types/api';
+
+export interface AuthConfig {
+  getToken: () => string | null;
+  getRefreshToken: () => string | null;
+  getTenantId: () => string | null;
+  onTokenRefreshed: (token: string) => void;
+}
+
+let authConfig: AuthConfig = {
+  getToken: () => null,
+  getRefreshToken: () => null,
+  getTenantId: () => null,
+  onTokenRefreshed: () => undefined,
+};
+
+export function configureAuth(config: AuthConfig): void {
+  authConfig = config;
+}
+
+export function resetAuth(): void {
+  authConfig = {
+    getToken: () => null,
+    getRefreshToken: () => null,
+    getTenantId: () => null,
+    onTokenRefreshed: () => undefined,
+  };
+}
+
+// ─── Token refresh queue ───────────────────────────────────────────────────────
+let isRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
+async function attemptTokenRefresh(): Promise<string | null> {
+  if (isRefreshing) {
+    return new Promise<string | null>((resolve) => {
+      refreshQueue.push(resolve);
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const refreshToken = authConfig.getRefreshToken();
+    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!response.ok) {
+      refreshQueue.forEach((resolve) => resolve(null));
+      refreshQueue = [];
+      return null;
+    }
+
+    const body = (await response.json()) as { access_token: string };
+    const newToken = body.access_token;
+    authConfig.onTokenRefreshed(newToken);
+    refreshQueue.forEach((resolve) => resolve(newToken));
+    refreshQueue = [];
+    return newToken;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+// ─── Core request ──────────────────────────────────────────────────────────────
+async function request<T>(
+  method: string,
+  path: string,
+  options: { params?: Record<string, unknown>; body?: unknown } = {},
+  isRetry = false,
+): Promise<T> {
+  const { params, body } = options;
+  const baseUrl = env.NEXT_PUBLIC_API_URL;
+
+  let url = `${baseUrl}${path}`;
+  if (params && Object.keys(params).length > 0) {
+    const search = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => [k, String(v)]),
+    );
+    url = `${url}?${search.toString()}`;
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const token = authConfig.getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const tenantId = authConfig.getTenantId();
+  if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw Object.assign(new Error('Network error. Check your connection.'), {
+      message: 'Network error. Check your connection.',
+    });
+  }
+
+  if (response.ok) {
+    return response.json() as Promise<T>;
+  }
+
+  const { status } = response;
+
+  if (status === 401 && !isRetry) {
+    const newToken = await attemptTokenRefresh();
+    if (!newToken) {
+      window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
+    }
+    return request<T>(method, path, options, true);
+  }
+
+  if (status === 403) {
+    window.location.href = '/unauthorized';
+    throw new Error('Forbidden');
+  }
+
+  if (status === 422) {
+    const apiError = (await response.json()) as ApiError;
+    throw apiError;
+  }
+
+  if (status >= 500) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  const fallback = (await response.json().catch(() => ({}))) as ApiError;
+  throw new Error(fallback.message ?? 'An unexpected error occurred.');
+}
+
+// ─── Public API client ─────────────────────────────────────────────────────────
+export const apiClient = {
+  get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+    return request<T>('GET', path, { params });
+  },
+
+  post<T>(path: string, body?: unknown): Promise<T> {
+    return request<T>('POST', path, { body });
+  },
+
+  patch<T>(path: string, body?: unknown): Promise<T> {
+    return request<T>('PATCH', path, { body });
+  },
+
+  delete<T>(path: string): Promise<T> {
+    return request<T>('DELETE', path);
+  },
+};
