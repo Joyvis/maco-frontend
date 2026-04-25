@@ -20,7 +20,9 @@ describe('env schema validation', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.flatten().fieldErrors.NEXT_PUBLIC_API_URL).toBeDefined();
+      expect(
+        result.error.flatten().fieldErrors.NEXT_PUBLIC_API_URL,
+      ).toBeDefined();
     }
   });
 
@@ -31,7 +33,9 @@ describe('env schema validation', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.flatten().fieldErrors.NEXT_PUBLIC_APP_NAME).toBeDefined();
+      expect(
+        result.error.flatten().fieldErrors.NEXT_PUBLIC_APP_NAME,
+      ).toBeDefined();
     }
   });
 

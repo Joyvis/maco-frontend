@@ -23,10 +23,13 @@ src/
 ## Commands
 
 ```bash
-npm run dev      # Start dev server on http://localhost:3000
-npm run build    # Production build
-npm run lint     # ESLint
-npm test         # Jest unit tests
+npm run dev          # Start dev server on http://localhost:3000
+npm run build        # Production build
+npm run lint         # ESLint (eslint .)
+npm run lint:fix     # ESLint with auto-fix
+npm run format       # Prettier write
+npm run format:check # Prettier check
+npm test             # Jest unit tests
 ```
 
 ## Conventions
@@ -35,6 +38,9 @@ npm test         # Jest unit tests
 - `noUncheckedIndexedAccess: true` — array/object access returns `T | undefined`
 - Add new shadcn/ui components via `npx shadcn@latest add <component>` — never edit `src/components/ui/` manually
 - Copy `.env.example` to `.env.local` before running locally; `src/config/env.ts` throws at startup if vars are missing/invalid
+- ESLint uses flat config (`eslint.config.mjs`); `next lint` is removed in Next.js 16 — use `eslint .` directly
+- `eslint-plugin-tailwindcss` points to `src/app/globals.css` for Tailwind v4 class ordering; `no-custom-classname` is off (shadcn theme variables)
+- Pre-commit hook runs `lint-staged` via Husky; staged `.ts/.tsx` files are auto-fixed then formatted
 
 ## CI Pipeline
 

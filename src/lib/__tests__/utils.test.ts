@@ -10,6 +10,8 @@ describe('AC6: path alias resolution', () => {
   });
 
   it('cn filters falsy values', () => {
-    expect(cn('block', false && 'hidden', undefined, 'text-sm')).toBe('block text-sm');
+    expect(cn('block', false && 'hidden', undefined, 'text-sm')).toBe(
+      'block text-sm',
+    );
   });
 });

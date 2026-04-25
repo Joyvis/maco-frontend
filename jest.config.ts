@@ -8,7 +8,10 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true, noUncheckedIndexedAccess: true } }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      { tsconfig: { strict: true, noUncheckedIndexedAccess: true } },
+    ],
   },
   coverageThreshold: {
     global: {
