@@ -1,4 +1,4 @@
-import { envSchema } from "./env.schema";
+import { envSchema } from './env.schema';
 
 const _env = envSchema.safeParse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
@@ -6,8 +6,8 @@ const _env = envSchema.safeParse({
 });
 
 if (!_env.success) {
-  console.error("Invalid environment variables:", _env.error.flatten().fieldErrors);
-  throw new Error("Invalid environment variables");
+  console.error('Invalid environment variables:', _env.error.flatten().fieldErrors);
+  throw new Error('Invalid environment variables');
 }
 
 export const env = _env.data;

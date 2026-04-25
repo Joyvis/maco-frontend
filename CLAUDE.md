@@ -1,10 +1,12 @@
 @AGENTS.md
 
 ## Stack
+
 - Next.js 16 (App Router), TypeScript 5 strict, Tailwind CSS 4, shadcn/ui (New York style)
 - React 19, Zod for runtime validation, Jest + ts-jest for unit tests
 
 ## Layout
+
 ```
 src/
 ├── app/              # App Router — (auth) public group, (dashboard) protected group
@@ -19,6 +21,7 @@ src/
 ```
 
 ## Commands
+
 ```bash
 npm run dev      # Start dev server on http://localhost:3000
 npm run build    # Production build
@@ -27,6 +30,7 @@ npm test         # Jest unit tests
 ```
 
 ## Conventions
+
 - Path aliases: `@/components`, `@/lib`, `@/hooks`, `@/services`, `@/types`, `@/providers`, `@/config`
 - `noUncheckedIndexedAccess: true` — array/object access returns `T | undefined`
 - Add new shadcn/ui components via `npx shadcn@latest add <component>` — never edit `src/components/ui/` manually
@@ -44,12 +48,12 @@ Jobs run sequentially with `needs:` dependencies; any failure skips downstream j
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `npm run lint` | ESLint |
-| `npm run format:check` | Prettier check |
-| `npm run type-check` | TypeScript (`tsc --noEmit`) |
-| `npx jest --coverage` | Tests with coverage |
-| `npm run build` | Next.js production build |
+| Command                | Description                 |
+| ---------------------- | --------------------------- |
+| `npm run lint`         | ESLint                      |
+| `npm run format:check` | Prettier check              |
+| `npm run type-check`   | TypeScript (`tsc --noEmit`) |
+| `npx jest --coverage`  | Tests with coverage         |
+| `npm run build`        | Next.js production build    |
 
 See `CONTRIBUTING.md` for local workflow and branch protection recommendations.
