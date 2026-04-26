@@ -137,6 +137,37 @@ describe('AC-6: No Authorization header when unauthenticated', () => {
   });
 });
 
+// ─── Refresh endpoint is the Next.js proxy ────────────────────────────────────
+describe('Token refresh hits the Next.js route handler, not the backend directly', () => {
+  it('calls /api/auth/refresh (not NEXT_PUBLIC_API_URL/auth/refresh) on 401', async () => {
+    configureAuth({
+      getToken: () => 'old-token',
+      getRefreshToken: () => null,
+      getTenantId: () => null,
+      onTokenRefreshed: jest.fn(),
+    });
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'new-token' }),
+      })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+
+    await apiClient.get('/secure');
+
+    const calls = (fetch as jest.Mock).mock.calls as [string, unknown][];
+    const refreshCall = calls.find(([url]) => (url as string).includes('auth/refresh'));
+    expect(refreshCall).toBeDefined();
+    // Must use the relative Next.js route — not the external API base URL
+    expect(refreshCall?.[0]).toBe('/api/auth/refresh');
+    expect(refreshCall?.[0]).not.toContain(BASE_URL);
+  });
+});
+
 // ─── AC-7: 401 triggers refresh and retry ─────────────────────────────────────
 describe('AC-7: 401 triggers token refresh and retries request', () => {
   it('refreshes token and retries original request on 401', async () => {

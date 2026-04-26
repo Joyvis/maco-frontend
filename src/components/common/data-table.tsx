@@ -80,6 +80,7 @@ export function DataTable<TData>({
     router.replace(`${pathname}${query ? `?${query}` : ''}`, { scroll: false });
   }, [pagination.pageIndex, pathname, router]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
