@@ -46,16 +46,18 @@ export function resetAuth(): void {
     onUnauthorized: defaultOnUnauthorized,
     onForbidden: defaultOnForbidden,
   };
+  isRefreshing = false;
+  refreshQueue = [];
 }
 
 // ─── Token refresh queue ───────────────────────────────────────────────────────
 let isRefreshing = false;
-let refreshQueue: Array<(token: string | null) => void> = [];
+let refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: Error) => void }> = [];
 
 async function attemptTokenRefresh(): Promise<string | null> {
   if (isRefreshing) {
-    return new Promise<string | null>((resolve) => {
-      refreshQueue.push(resolve);
+    return new Promise<string | null>((resolve, reject) => {
+      refreshQueue.push({ resolve: (token) => resolve(token), reject });
     });
   }
 
@@ -69,7 +71,8 @@ async function attemptTokenRefresh(): Promise<string | null> {
     });
 
     if (!response.ok) {
-      refreshQueue.forEach((resolve) => resolve(null));
+      const err = new Error('Session expired. Please log in again.');
+      refreshQueue.forEach(({ reject }) => reject(err));
       refreshQueue = [];
       return null;
     }
@@ -77,7 +80,7 @@ async function attemptTokenRefresh(): Promise<string | null> {
     const body = (await response.json()) as { access_token: string };
     const newToken = body.access_token;
     authConfig.onTokenRefreshed(newToken);
-    refreshQueue.forEach((resolve) => resolve(newToken));
+    refreshQueue.forEach(({ resolve }) => resolve(newToken));
     refreshQueue = [];
     return newToken;
   } finally {

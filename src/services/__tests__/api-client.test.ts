@@ -230,6 +230,27 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
     await Promise.all([apiClient.get('/a'), apiClient.get('/b'), apiClient.get('/c')]);
     expect(refreshCount).toBe(1);
   });
+
+  it('calls onUnauthorized exactly once when concurrent 401s all fail to refresh', async () => {
+    const onUnauthorized = jest.fn();
+    configureAuth({
+      getToken: () => 'old-token',
+      getRefreshToken: () => 'refresh-token',
+      getTenantId: () => null,
+      onTokenRefreshed: jest.fn(),
+      onUnauthorized,
+    });
+
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url.includes('/auth/refresh')) {
+        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+    });
+
+    await Promise.allSettled([apiClient.get('/a'), apiClient.get('/b'), apiClient.get('/c')]);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ─── AC-10: 403 → onForbidden callback ───────────────────────────────────────
@@ -358,6 +379,38 @@ describe('Initial authConfig lambdas', () => {
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBeUndefined();
     expect(headers['X-Tenant-Id']).toBeUndefined();
+  });
+});
+
+// ─── resetAuth clears refresh state ──────────────────────────────────────────
+describe('resetAuth clears isRefreshing and refreshQueue', () => {
+  it('resets refresh state so subsequent auth cycles do not hang', async () => {
+    configureAuth({
+      getToken: () => 'token',
+      getRefreshToken: () => 'refresh',
+      getTenantId: () => null,
+      onTokenRefreshed: jest.fn(),
+    });
+
+    // First request: 401 → refresh succeeds
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'new-token' }),
+      })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+
+    await apiClient.get('/a');
+
+    // resetAuth clears state; a new request should not inherit stale isRefreshing
+    resetAuth();
+
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    await apiClient.get('/b');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
 
