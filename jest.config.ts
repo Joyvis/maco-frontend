@@ -11,6 +11,7 @@ const config: Config = {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true, noUncheckedIndexedAccess: true } }],
   },
   transformIgnorePatterns: ['/node_modules/(?!(jose)/)'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/components/ui/**', '!src/**/*.d.ts'],
   coverageThreshold: {
     global: {
       branches: 80,
