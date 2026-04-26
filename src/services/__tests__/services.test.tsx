@@ -77,8 +77,8 @@ describe('AC-18: useServices returns data, meta, isLoading', () => {
 });
 
 // ─── AC-18: useService hook ───────────────────────────────────────────────────
-describe('useService returns single item', () => {
-  it('returns a single service by id', async () => {
+describe('AC-18: useService returns unwrapped single item', () => {
+  it('returns unwrapped service data by id', async () => {
     const mockResponse: ApiResponse<{ id: string; name: string }> = {
       data: { id: '1', name: 'My Service' },
     };
@@ -87,7 +87,7 @@ describe('useService returns single item', () => {
     const { result } = renderHook(() => useService('1'), { wrapper: makeWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data).toEqual(mockResponse);
+    expect(result.current.data).toEqual(mockResponse.data);
   });
 });
 

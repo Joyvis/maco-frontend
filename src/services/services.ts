@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
-import type { QueryParams } from '@/services/api-client';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 
 // ─── Service type (stub — replace with generated schema type when available) ───
@@ -10,7 +9,7 @@ export interface Service {
   status?: 'active' | 'inactive';
 }
 
-export interface ServiceFilters {
+export interface ServiceFilters extends Record<string, string | number | boolean | undefined> {
   status?: 'active' | 'inactive';
   page?: number;
   page_size?: number;
@@ -29,7 +28,7 @@ export const serviceKeys = {
 export function useServices(filters: ServiceFilters) {
   const { data, ...rest } = useQuery({
     queryKey: serviceKeys.list(filters),
-    queryFn: () => apiClient.get<PaginatedResponse<Service>>('/services', filters as QueryParams),
+    queryFn: () => apiClient.get<PaginatedResponse<Service>>('/services', filters),
   });
 
   return {
@@ -40,11 +39,16 @@ export function useServices(filters: ServiceFilters) {
 }
 
 export function useService(id: string) {
-  return useQuery({
+  const { data, ...rest } = useQuery({
     queryKey: serviceKeys.detail(id),
     queryFn: () => apiClient.get<ApiResponse<Service>>(`/services/${id}`),
     enabled: Boolean(id),
   });
+
+  return {
+    data: data?.data,
+    ...rest,
+  };
 }
 
 export function useCreateService() {

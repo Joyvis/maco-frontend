@@ -168,14 +168,16 @@ describe('AC-7: 401 triggers token refresh and retries request', () => {
   });
 });
 
-// ─── AC-8: 401 + refresh failure → redirect /login ───────────────────────────
-describe('AC-8: Redirect to /login when refresh fails', () => {
-  it('redirects to /login when refresh request fails', async () => {
+// ─── AC-8: 401 + refresh failure → onUnauthorized callback ──────────────────
+describe('AC-8: Calls onUnauthorized when refresh fails', () => {
+  it('calls onUnauthorized callback when refresh request fails', async () => {
+    const onUnauthorized = jest.fn();
     configureAuth({
       getToken: () => 'old-token',
       getRefreshToken: () => 'refresh-token',
       getTenantId: () => null,
       onTokenRefreshed: jest.fn(),
+      onUnauthorized,
     });
 
     global.fetch = jest
@@ -184,7 +186,7 @@ describe('AC-8: Redirect to /login when refresh fails', () => {
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
 
     await expect(apiClient.get('/secure')).rejects.toThrow();
-    expect(window.location.href).toBe('/login');
+    expect(onUnauthorized).toHaveBeenCalled();
   });
 });
 
@@ -219,12 +221,20 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
   });
 });
 
-// ─── AC-10: 403 → redirect /unauthorized ─────────────────────────────────────
-describe('AC-10: 403 redirects to /unauthorized', () => {
-  it('sets window.location.href to /unauthorized on 403', async () => {
+// ─── AC-10: 403 → onForbidden callback ───────────────────────────────────────
+describe('AC-10: 403 calls onForbidden callback', () => {
+  it('calls onForbidden callback on 403', async () => {
+    const onForbidden = jest.fn();
+    configureAuth({
+      getToken: () => null,
+      getRefreshToken: () => null,
+      getTenantId: () => null,
+      onTokenRefreshed: jest.fn(),
+      onForbidden,
+    });
     global.fetch = mockFetchFail(403);
     await expect(apiClient.get('/admin')).rejects.toThrow();
-    expect(window.location.href).toBe('/unauthorized');
+    expect(onForbidden).toHaveBeenCalled();
   });
 });
 
@@ -255,5 +265,101 @@ describe('AC-13: Network error throws typed error', () => {
     await expect(apiClient.get('/offline')).rejects.toThrow(
       'Network error. Check your connection.'
     );
+  });
+});
+
+// ─── Query params serialization ───────────────────────────────────────────────
+describe('Query params serialization', () => {
+  it('appends defined params to the URL', async () => {
+    global.fetch = mockFetchOk({ data: [] });
+    await apiClient.get('/items', { status: 'active', page: 1 });
+    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    expect(url).toContain('status=active');
+    expect(url).toContain('page=1');
+  });
+
+  it('omits undefined params from the URL', async () => {
+    global.fetch = mockFetchOk({ data: [] });
+    await apiClient.get('/items', { status: undefined, page: 2 });
+    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    expect(url).not.toContain('status');
+    expect(url).toContain('page=2');
+  });
+});
+
+// ─── Content-Type header ──────────────────────────────────────────────────────
+describe('Content-Type header', () => {
+  it('omits Content-Type on bodyless GET requests', async () => {
+    global.fetch = mockFetchOk({});
+    await apiClient.get('/items');
+    const [, init] = (fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers['Content-Type']).toBeUndefined();
+  });
+
+  it('includes Content-Type on POST with body', async () => {
+    global.fetch = mockFetchOk({});
+    await apiClient.post('/items', { name: 'test' });
+    const [, init] = (fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers['Content-Type']).toBe('application/json');
+  });
+});
+
+// ─── Fallback error ───────────────────────────────────────────────────────────
+describe('Fallback error for unhandled status codes', () => {
+  it('throws with response message for unhandled status (e.g. 404)', async () => {
+    global.fetch = mockFetchFail(404, { message: 'Not found' });
+    await expect(apiClient.get('/missing')).rejects.toThrow('Not found');
+  });
+
+  it('throws default message when body has no message', async () => {
+    global.fetch = mockFetchFail(404, {});
+    await expect(apiClient.get('/missing')).rejects.toThrow('An unexpected error occurred.');
+  });
+});
+
+// ─── Initial authConfig lambdas (before resetAuth is ever called) ─────────────
+describe('Initial authConfig lambdas', () => {
+  it('getToken and getTenantId return null in the initial module state', async () => {
+    // Use an isolated module instance so resetAuth() from beforeEach has not run yet,
+    // ensuring the module-initialization lambdas (lines 14, 16) are exercised.
+    let fresh!: typeof import('@/services/api-client');
+    jest.isolateModules(() => {
+      jest.mock('@/config/env', () => ({
+        env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      fresh = require('@/services/api-client') as typeof import('@/services/api-client');
+    });
+
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    await fresh.apiClient.get('/test');
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers['Authorization']).toBeUndefined();
+    expect(headers['X-Tenant-Id']).toBeUndefined();
+  });
+});
+
+// ─── resetAuth default lambdas ────────────────────────────────────────────────
+describe('resetAuth default lambdas (getRefreshToken and onTokenRefreshed)', () => {
+  it('covers getRefreshToken and onTokenRefreshed defaults when 401+refresh succeeds', async () => {
+    // resetAuth() is called in beforeEach — authConfig uses its default lambdas.
+    // Trigger a 401 so attemptTokenRefresh calls getRefreshToken (line 27),
+    // then mock the refresh succeeding so onTokenRefreshed (line 29) is called.
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'new-token' }),
+      })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+
+    const result = await apiClient.get('/secure');
+    expect(result).toEqual({ data: 'ok' });
   });
 });

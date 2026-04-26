@@ -69,7 +69,8 @@ describe('AC-15/16: React Query Devtools', () => {
   it('uses dynamic import for devtools when NODE_ENV is development (AC-15)', () => {
     // Load a fresh copy of the module with NODE_ENV=development to trigger the
     // dynamic-import branch. We verify via dynamicCallCount rather than rendering
-    // the isolated component, which avoids the "multiple React copies" issue.
+    // the isolated component, which avoids the "multiple React copies" issue that
+    // arises when jest.isolateModules creates a separate React instance.
     const originalNodeEnv = process.env.NODE_ENV;
     Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true });
 

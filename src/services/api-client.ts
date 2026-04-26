@@ -6,6 +6,8 @@ export interface AuthConfig {
   getRefreshToken: () => string | null;
   getTenantId: () => string | null;
   onTokenRefreshed: (token: string) => void;
+  onUnauthorized?: () => void;
+  onForbidden?: () => void;
 }
 
 let authConfig: AuthConfig = {
@@ -87,9 +89,11 @@ async function request<T>(
     url = `${url}?${search.toString()}`;
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const token = authConfig.getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -105,9 +109,7 @@ async function request<T>(
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw Object.assign(new Error('Network error. Check your connection.'), {
-      message: 'Network error. Check your connection.',
-    });
+    throw new Error('Network error. Check your connection.');
   }
 
   if (response.ok) {
@@ -119,14 +121,14 @@ async function request<T>(
   if (status === 401 && !isRetry) {
     const newToken = await attemptTokenRefresh();
     if (!newToken) {
-      window.location.href = '/login';
+      authConfig.onUnauthorized?.();
       throw new Error('Session expired. Please log in again.');
     }
     return request<T>(method, path, options, true);
   }
 
   if (status === 403) {
-    window.location.href = '/unauthorized';
+    authConfig.onForbidden?.();
     throw new Error('Forbidden');
   }
 
