@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
+import type { Mock } from 'vitest';
 
 import { DataTable } from '../data-table';
 
-const mockReplace = jest.fn();
+const mockReplace = vi.fn();
 
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: jest.fn(), replace: mockReplace })),
-  usePathname: jest.fn().mockReturnValue('/test'),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: mockReplace })),
+  usePathname: vi.fn().mockReturnValue('/test'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 interface Row {
@@ -92,8 +93,8 @@ describe('DataTable', () => {
   });
 
   it('preserves non-page params when navigating between pages', async () => {
-    const { useSearchParams } = jest.requireMock('next/navigation') as {
-      useSearchParams: jest.Mock;
+    const { useSearchParams } = (await vi.importMock('next/navigation')) as {
+      useSearchParams: Mock;
     };
     useSearchParams.mockReturnValue(new URLSearchParams('filter=active'));
     try {

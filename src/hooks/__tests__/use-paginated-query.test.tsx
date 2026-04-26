@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePaginatedQuery } from '@/hooks/use-paginated-query';
 import type { PaginatedResponse } from '@/types/api';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
@@ -30,7 +30,7 @@ describe('AC-20: usePaginatedQuery returns data, meta, isLoading, page, setPage'
       data: [{ id: '1' }],
       meta: { total: 5, page: 1, page_size: 2 },
     };
-    const fetcher = jest.fn().mockResolvedValue(mockData);
+    const fetcher = vi.fn().mockResolvedValue(mockData);
     const keyFactory = (params: { page: number; page_size: number }) =>
       ['items', params] as const;
 
@@ -62,7 +62,7 @@ describe('AC-20: usePaginatedQuery returns data, meta, isLoading, page, setPage'
       data: [{ id: '3' }],
       meta: { total: 4, page: 2, page_size: 2 },
     };
-    const fetcher = jest
+    const fetcher = vi
       .fn()
       .mockResolvedValueOnce(page1)
       .mockResolvedValueOnce(page2);

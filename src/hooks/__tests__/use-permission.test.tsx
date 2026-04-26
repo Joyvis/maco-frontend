@@ -5,7 +5,7 @@ import { AuthContext } from '@/providers/auth-provider';
 import { usePermission } from '@/hooks/use-permission';
 import type { AuthContextValue, User } from '@/types/auth';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
@@ -30,8 +30,8 @@ function makeWrapper(user: User | null, isLoading = false) {
     tenant: user?.tenant_id ?? null,
     isAuthenticated: user !== null,
     isLoading,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
   };
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (

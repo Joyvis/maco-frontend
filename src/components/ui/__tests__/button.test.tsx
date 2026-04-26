@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -24,7 +21,7 @@ describe('Button', () => {
   });
 
   it('calls onClick handler when clicked', async () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
     await userEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);

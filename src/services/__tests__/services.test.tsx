@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
+import type { Mock } from 'vitest';
 
 import { apiClient } from '@/services/api-client';
 import {
@@ -11,22 +12,22 @@ import {
 } from '@/services/services';
 import type { PaginatedResponse, ApiResponse } from '@/types/api';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
   },
 }));
 
-jest.mock('@/services/api-client', () => ({
+vi.mock('@/services/api-client', () => ({
   apiClient: {
-    get: jest.fn(),
-    post: jest.fn(),
-    patch: jest.fn(),
-    delete: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
   },
-  configureAuth: jest.fn(),
-  resetAuth: jest.fn(),
+  configureAuth: vi.fn(),
+  resetAuth: vi.fn(),
 }));
 
 function makeWrapper() {
@@ -74,7 +75,7 @@ describe('AC-18: useServices returns data, meta, isLoading', () => {
       data: [{ id: '1', name: 'My Service' }],
       meta: { total: 1, page: 1, page_size: 10 },
     };
-    (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
+    (apiClient.get as Mock).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useServices({}), {
       wrapper: makeWrapper(),
@@ -94,7 +95,7 @@ describe('AC-18: useService returns unwrapped single item', () => {
     const mockResponse: ApiResponse<{ id: string; name: string }> = {
       data: { id: '1', name: 'My Service' },
     };
-    (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
+    (apiClient.get as Mock).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useService('1'), {
       wrapper: makeWrapper(),
@@ -111,12 +112,12 @@ describe('AC-19: useCreateService invalidates services list on success', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
     const mockCreate: ApiResponse<{ id: string; name: string }> = {
       data: { id: '2', name: 'New Service' },
     };
-    (apiClient.post as jest.Mock).mockResolvedValue(mockCreate);
+    (apiClient.post as Mock).mockResolvedValue(mockCreate);
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

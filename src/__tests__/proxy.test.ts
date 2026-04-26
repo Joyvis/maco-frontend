@@ -1,20 +1,20 @@
-/**
- * @jest-environment node
- */
+// @vitest-environment node
+
 import { NextRequest, NextResponse } from 'next/server';
+import type { MockedFunction } from 'vitest';
 
 import { decodeToken, isTokenExpired } from '@/lib/auth/jwt';
 import type { JWTPayload } from '@/types/auth';
 
 import { proxy } from '../proxy';
 
-jest.mock('@/lib/auth/jwt', () => ({
-  decodeToken: jest.fn(),
-  isTokenExpired: jest.fn(),
+vi.mock('@/lib/auth/jwt', () => ({
+  decodeToken: vi.fn(),
+  isTokenExpired: vi.fn(),
 }));
 
-const mockDecodeToken = decodeToken as jest.MockedFunction<typeof decodeToken>;
-const mockIsTokenExpired = isTokenExpired as jest.MockedFunction<
+const mockDecodeToken = decodeToken as MockedFunction<typeof decodeToken>;
+const mockIsTokenExpired = isTokenExpired as MockedFunction<
   typeof isTokenExpired
 >;
 
@@ -28,7 +28,7 @@ const MOCK_PAYLOAD: JWTPayload = {
   iat: Math.floor(Date.now() / 1000),
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => vi.clearAllMocks());
 
 // ─── AC-6: public routes pass through ────────────────────────────────────────
 describe('AC-6: public routes are accessible without authentication', () => {
@@ -74,7 +74,7 @@ describe('AC-7: authenticated requests with valid token pass through', () => {
     mockDecodeToken.mockReturnValue(MOCK_PAYLOAD);
     mockIsTokenExpired.mockReturnValue(false);
 
-    const nextSpy = jest.spyOn(NextResponse, 'next');
+    const nextSpy = vi.spyOn(NextResponse, 'next');
 
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=valid.jwt.token' },
@@ -114,7 +114,7 @@ describe('proxy refresh paths', () => {
       ok: true,
       headers: { getSetCookie: () => setCookies },
     };
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValue(fakeRes) as unknown as typeof fetch;
   }
@@ -124,7 +124,7 @@ describe('proxy refresh paths', () => {
       ok: false,
       headers: { getSetCookie: () => [] },
     };
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValue(fakeRes) as unknown as typeof fetch;
   }
@@ -212,7 +212,7 @@ describe('proxy refresh paths', () => {
   it('expired access token + no refresh cookie → redirects to /login (no fetch attempted)', async () => {
     mockDecodeToken.mockReturnValue(MOCK_PAYLOAD);
     mockIsTokenExpired.mockReturnValue(true);
-    globalThis.fetch = jest.fn() as unknown as typeof fetch;
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
 
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=expired' },

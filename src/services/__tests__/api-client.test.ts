@@ -1,9 +1,11 @@
+import type { Mock } from 'vitest';
+
 import { apiClient, configureAuth, resetAuth } from '@/services/api-client';
 
 const BASE_URL = 'http://localhost:8000';
 
 // Mock env module
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
@@ -11,14 +13,14 @@ jest.mock('@/config/env', () => ({
 }));
 
 // Capture window.location changes
-const mockLocationAssign = jest.fn();
+const mockLocationAssign = vi.fn();
 Object.defineProperty(window, 'location', {
   value: { href: '', assign: mockLocationAssign },
   writable: true,
 });
 
 function mockFetchOk(body: unknown, status = 200) {
-  return jest.fn().mockResolvedValue({
+  return vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
     json: async () => body,
@@ -26,7 +28,7 @@ function mockFetchOk(body: unknown, status = 200) {
 }
 
 function mockFetchFail(status: number, body: unknown = {}) {
-  return jest.fn().mockResolvedValue({
+  return vi.fn().mockResolvedValue({
     ok: false,
     status,
     json: async () => body,
@@ -34,7 +36,7 @@ function mockFetchFail(status: number, body: unknown = {}) {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   window.location.href = '';
   resetAuth();
 });
@@ -98,7 +100,7 @@ describe('AC-4: Authorization header when authenticated', () => {
       getToken: () => 'my-jwt-token',
       getRefreshToken: () => null,
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
     });
     global.fetch = mockFetchOk({});
     await apiClient.get('/protected');
@@ -120,7 +122,7 @@ describe('AC-5: X-Tenant-Id header from auth context', () => {
       getToken: () => 'token',
       getRefreshToken: () => null,
       getTenantId: () => 'tenant-123',
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
     });
     global.fetch = mockFetchOk({});
     await apiClient.get('/resource');
@@ -138,10 +140,7 @@ describe('AC-6: No Authorization header when unauthenticated', () => {
   it('omits Authorization header when no token', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.get('/public');
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBeUndefined();
   });
@@ -154,10 +153,10 @@ describe('Token refresh hits the Next.js route handler, not the backend directly
       getToken: () => 'old-token',
       getRefreshToken: () => null,
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
     });
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
       .mockResolvedValueOnce({
@@ -173,7 +172,7 @@ describe('Token refresh hits the Next.js route handler, not the backend directly
 
     await apiClient.get('/secure');
 
-    const calls = (fetch as jest.Mock).mock.calls as [string, unknown][];
+    const calls = (fetch as Mock).mock.calls as [string, unknown][];
     const refreshCall = calls.find(([url]) =>
       (url as string).includes('auth/refresh'),
     );
@@ -187,7 +186,7 @@ describe('Token refresh hits the Next.js route handler, not the backend directly
 // ─── AC-7: 401 triggers refresh and retry ─────────────────────────────────────
 describe('AC-7: 401 triggers token refresh and retries request', () => {
   it('refreshes token and retries original request on 401', async () => {
-    const onTokenRefreshed = jest.fn();
+    const onTokenRefreshed = vi.fn();
     configureAuth({
       getToken: () => 'old-token',
       getRefreshToken: () => 'refresh-token',
@@ -195,7 +194,7 @@ describe('AC-7: 401 triggers token refresh and retries request', () => {
       onTokenRefreshed,
     });
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       // Original request → 401
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
@@ -222,16 +221,16 @@ describe('AC-7: 401 triggers token refresh and retries request', () => {
 // ─── AC-8: 401 + refresh failure → onUnauthorized callback ──────────────────
 describe('AC-8: Calls onUnauthorized when refresh fails', () => {
   it('calls onUnauthorized callback when refresh request fails', async () => {
-    const onUnauthorized = jest.fn();
+    const onUnauthorized = vi.fn();
     configureAuth({
       getToken: () => 'old-token',
       getRefreshToken: () => 'refresh-token',
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
       onUnauthorized,
     });
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
       .mockResolvedValueOnce({
@@ -246,7 +245,7 @@ describe('AC-8: Calls onUnauthorized when refresh fails', () => {
 
   it('redirects to /login by default when refresh fails and no onUnauthorized provided', async () => {
     // resetAuth() in beforeEach sets the default redirect callback
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
       .mockResolvedValueOnce({
@@ -267,11 +266,11 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
       getToken: () => 'old-token',
       getRefreshToken: () => 'refresh-token',
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
     });
 
     let refreshCount = 0;
-    global.fetch = jest.fn().mockImplementation((url: string) => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes('/auth/refresh')) {
         refreshCount++;
         return Promise.resolve({
@@ -303,16 +302,16 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
   });
 
   it('calls onUnauthorized exactly once when concurrent 401s all fail to refresh', async () => {
-    const onUnauthorized = jest.fn();
+    const onUnauthorized = vi.fn();
     configureAuth({
       getToken: () => 'old-token',
       getRefreshToken: () => 'refresh-token',
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
       onUnauthorized,
     });
 
-    global.fetch = jest.fn().mockImplementation((url: string) => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes('/auth/refresh')) {
         return Promise.resolve({
           ok: false,
@@ -339,12 +338,12 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
 // ─── AC-10: 403 → onForbidden callback ───────────────────────────────────────
 describe('AC-10: 403 calls onForbidden callback', () => {
   it('calls onForbidden callback on 403', async () => {
-    const onForbidden = jest.fn();
+    const onForbidden = vi.fn();
     configureAuth({
       getToken: () => null,
       getRefreshToken: () => null,
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
       onForbidden,
     });
     global.fetch = mockFetchFail(403);
@@ -388,9 +387,7 @@ describe('AC-12: 5xx throws generic error', () => {
 // ─── AC-13: Network error ─────────────────────────────────────────────────────
 describe('AC-13: Network error throws typed error', () => {
   it('throws with "Network error" message on fetch failure', async () => {
-    global.fetch = jest
-      .fn()
-      .mockRejectedValue(new TypeError('Failed to fetch'));
+    global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(apiClient.get('/offline')).rejects.toThrow(
       'Network error. Check your connection.',
     );
@@ -402,7 +399,7 @@ describe('Query params serialization', () => {
   it('appends defined params to the URL', async () => {
     global.fetch = mockFetchOk({ data: [] });
     await apiClient.get('/items', { status: 'active', page: 1 });
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('status=active');
     expect(url).toContain('page=1');
   });
@@ -410,7 +407,7 @@ describe('Query params serialization', () => {
   it('omits undefined params from the URL', async () => {
     global.fetch = mockFetchOk({ data: [] });
     await apiClient.get('/items', { status: undefined, page: 2 });
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).not.toContain('status');
     expect(url).toContain('page=2');
   });
@@ -421,10 +418,7 @@ describe('Content-Type header', () => {
   it('omits Content-Type on bodyless GET requests', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.get('/items');
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers['Content-Type']).toBeUndefined();
   });
@@ -432,10 +426,7 @@ describe('Content-Type header', () => {
   it('includes Content-Type on POST with body', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.post('/items', { name: 'test' });
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers['Content-Type']).toBe('application/json');
   });
@@ -459,8 +450,8 @@ describe('Fallback error for unhandled status codes', () => {
 // ─── 204 No Content ───────────────────────────────────────────────────────────
 describe('204 No Content returns undefined without parsing body', () => {
   it('returns undefined on 204 DELETE without calling response.json()', async () => {
-    const jsonSpy = jest.fn();
-    global.fetch = jest
+    const jsonSpy = vi.fn();
+    global.fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, status: 204, json: jsonSpy });
     const result = await apiClient.delete('/items/1');
@@ -475,24 +466,21 @@ describe('Initial authConfig lambdas', () => {
     // Use an isolated module instance so resetAuth() from beforeEach has not run yet,
     // ensuring the module-initialization lambdas (lines 14, 16) are exercised.
     type ApiClientModule = typeof import('@/services/api-client');
-    let fresh!: ApiClientModule;
-    jest.isolateModules(() => {
-      jest.mock('@/config/env', () => ({
-        env: {
-          NEXT_PUBLIC_API_URL: 'http://localhost:8000',
-          NEXT_PUBLIC_APP_NAME: 'Maco',
-        },
-      }));
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      fresh = require('@/services/api-client') as ApiClientModule;
-    });
+    vi.doMock('@/config/env', () => ({
+      env: {
+        NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+        NEXT_PUBLIC_APP_NAME: 'Maco',
+      },
+    }));
+    vi.resetModules();
+    const fresh = (await import('@/services/api-client')) as ApiClientModule;
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await fresh.apiClient.get('/test');
 
-    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [
+    const [, init] = (global.fetch as Mock).mock.calls[0] as [
       string,
       RequestInit,
     ];
@@ -509,11 +497,11 @@ describe('resetAuth clears isRefreshing and refreshQueue', () => {
       getToken: () => 'token',
       getRefreshToken: () => 'refresh',
       getTenantId: () => null,
-      onTokenRefreshed: jest.fn(),
+      onTokenRefreshed: vi.fn(),
     });
 
     // First request: 401 → refresh succeeds
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
       .mockResolvedValueOnce({
@@ -532,7 +520,7 @@ describe('resetAuth clears isRefreshing and refreshQueue', () => {
     // resetAuth clears state; a new request should not inherit stale isRefreshing
     resetAuth();
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await apiClient.get('/b');
@@ -546,7 +534,7 @@ describe('resetAuth default lambdas (getRefreshToken and onTokenRefreshed)', () 
     // resetAuth() is called in beforeEach — authConfig uses its default lambdas.
     // Trigger a 401 so attemptTokenRefresh calls getRefreshToken (line 27),
     // then mock the refresh succeeding so onTokenRefreshed (line 29) is called.
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
       .mockResolvedValueOnce({

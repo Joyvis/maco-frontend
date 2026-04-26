@@ -5,15 +5,15 @@ import { AuthContext } from '@/providers/auth-provider';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import type { AuthContextValue } from '@/types/auth';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
   },
 }));
 
-const mockPush = jest.fn();
-jest.mock('next/navigation', () => ({
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   usePathname: () => '/dashboard',
 }));
@@ -33,8 +33,8 @@ function makeWrapper(isAuthenticated: boolean, isLoading: boolean) {
     tenant: isAuthenticated ? 't1' : null,
     isAuthenticated,
     isLoading,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
   };
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
@@ -43,7 +43,7 @@ function makeWrapper(isAuthenticated: boolean, isLoading: boolean) {
   };
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => vi.clearAllMocks());
 
 // ─── AC-5 (client-side): useRequireAuth redirects unauthenticated users ──────
 describe('AC-5 (client): useRequireAuth redirects when unauthenticated', () => {

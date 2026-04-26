@@ -9,7 +9,7 @@ describe('ConfirmDialog', () => {
       <ConfirmDialog
         title="Delete item"
         description="Are you sure?"
-        onConfirm={jest.fn()}
+        onConfirm={vi.fn()}
         trigger={<button>Delete</button>}
       />,
     );
@@ -19,7 +19,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('calls onConfirm when Confirmar is clicked', async () => {
-    const onConfirm = jest.fn().mockResolvedValue(undefined);
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
     render(
       <ConfirmDialog
         title="Delete item"
@@ -39,7 +39,7 @@ describe('ConfirmDialog', () => {
         title="Delete item"
         description="Are you sure?"
         confirmLabel="Excluir"
-        onConfirm={jest.fn()}
+        onConfirm={vi.fn()}
         trigger={<button>Delete</button>}
       />,
     );
@@ -49,7 +49,7 @@ describe('ConfirmDialog', () => {
 
   it('shows loading state while onConfirm executes', async () => {
     let resolve: () => void;
-    const onConfirm = jest.fn(
+    const onConfirm = vi.fn(
       () =>
         new Promise<void>((r) => {
           resolve = r;

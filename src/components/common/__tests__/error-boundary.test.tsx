@@ -12,7 +12,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('calls reset when Tentar Novamente is clicked', async () => {
-    const reset = jest.fn();
+    const reset = vi.fn();
     render(<ErrorBoundary error={new Error('Test error')} reset={reset} />);
     await userEvent.click(
       screen.getByRole('button', { name: /tentar novamente/i }),
