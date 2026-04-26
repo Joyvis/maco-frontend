@@ -196,6 +196,7 @@ export function SidebarContent({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/** Top-level navigation sidebar shown on every authenticated page. */
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const { collapsed, toggle } = useSidebarState();
 
