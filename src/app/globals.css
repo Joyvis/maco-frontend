@@ -117,6 +117,19 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@media (max-width: 767px) {
+  [data-sonner-toaster][data-y-position='bottom'] {
+    bottom: auto !important;
+    top: 16px !important;
+  }
+  [data-sonner-toaster][data-x-position='right'],
+  [data-sonner-toaster][data-x-position='left'] {
+    right: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
