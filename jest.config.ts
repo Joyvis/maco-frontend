@@ -14,6 +14,8 @@ const config: Config = {
     ],
   },
   transformIgnorePatterns: ['/node_modules/(?!(jose)/)'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
+  coveragePathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/components/ui/**',
