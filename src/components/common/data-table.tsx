@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   flexRender,
   getCoreRowModel,
@@ -49,12 +50,28 @@ export function DataTable<TData>({
   searchColumn,
   onPaginationChange,
 }: DataTableProps<TData>) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
+  const [pagination, setPagination] = useState<PaginationState>(() => ({
+    pageIndex: Math.max(0, Number(searchParams.get('page') ?? '0')),
     pageSize,
-  });
+  }));
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (pagination.pageIndex === 0) {
+      params.delete('page');
+    } else {
+      params.set('page', String(pagination.pageIndex));
+    }
+    const query = params.toString();
+    router.replace(`${pathname}${query ? `?${query}` : ''}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.pageIndex, pathname]);
 
   const table = useReactTable({
     data,

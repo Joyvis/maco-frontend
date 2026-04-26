@@ -10,6 +10,7 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true, noUncheckedIndexedAccess: true } }],
   },
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/components/ui/**', '!src/**/*.d.ts'],
   coverageThreshold: {
     global: {
       branches: 80,

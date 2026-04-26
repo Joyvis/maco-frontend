@@ -19,7 +19,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-export function useSidebarState() {
+function useSidebarState() {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(STORAGE_KEY) === 'collapsed';

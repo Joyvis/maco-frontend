@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '../data-table';
 
+const mockReplace = jest.fn();
+
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/test',
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: jest.fn(() => ({ push: jest.fn(), replace: mockReplace })),
+  usePathname: jest.fn().mockReturnValue('/test'),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
 }));
 
 interface Row {
@@ -22,6 +24,10 @@ const columns: ColumnDef<Row>[] = [
 const data: Row[] = Array.from({ length: 15 }, (_, i) => ({ id: i + 1, name: `Item ${i + 1}` }));
 
 describe('DataTable', () => {
+  beforeEach(() => {
+    mockReplace.mockClear();
+  });
+
   it('renders column headers', () => {
     render(<DataTable columns={columns} data={data.slice(0, 5)} />);
     expect(screen.getByText('ID')).toBeInTheDocument();
@@ -52,5 +58,21 @@ describe('DataTable', () => {
     expect(screen.getByText('Item 1')).toBeInTheDocument();
     expect(screen.queryByText('Item 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Item 9')).not.toBeInTheDocument();
+  });
+
+  it('syncs page index to URL when navigating to next page', async () => {
+    render(<DataTable columns={columns} data={data} pageSize={10} />);
+    mockReplace.mockClear();
+    await userEvent.click(screen.getByRole('button', { name: /next page/i }));
+    expect(mockReplace).toHaveBeenCalledWith('/test?page=1');
+  });
+
+  it('removes page param from URL when back on first page', async () => {
+    render(<DataTable columns={columns} data={data} pageSize={10} />);
+    mockReplace.mockClear();
+    await userEvent.click(screen.getByRole('button', { name: /next page/i }));
+    await userEvent.click(screen.getByRole('button', { name: /previous page/i }));
+    const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1]?.[0] as string;
+    expect(lastCall).not.toMatch(/[?&]page=/);
   });
 });

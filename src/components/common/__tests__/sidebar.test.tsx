@@ -112,5 +112,7 @@ describe('Sidebar', () => {
     renderSidebar();
     expect(screen.getByText('Catálogo')).toBeInTheDocument();
     expect(screen.getByText('Serviços')).toBeInTheDocument();
+    const groupTrigger = screen.getByText('Catálogo').closest('button');
+    expect(groupTrigger).toHaveAttribute('data-state', 'open');
   });
 });
