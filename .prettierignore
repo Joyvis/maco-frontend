@@ -1,2 +1,6 @@
+node_modules
+.next
+coverage
+dist
 # Auto-generated shadcn/ui primitives — do not hand-edit
 src/components/ui/

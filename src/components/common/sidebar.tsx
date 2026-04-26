@@ -4,13 +4,22 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, PanelLeft } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/config/navigation';
 import { usePermissions } from '@/providers/permissions-provider';
 import type { NavItem } from '@/types/navigation';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 const STORAGE_KEY = 'maco-sidebar-state';
 
@@ -45,7 +54,8 @@ function NavGroup({
   collapsed: boolean;
   pathname: string;
 }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+  const isActive =
+    pathname === item.href || pathname.startsWith(item.href + '/');
   const Icon = item.icon;
 
   if (!item.children) {
@@ -61,7 +71,8 @@ function NavGroup({
             className={cn(
               'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
               'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-              isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+              isActive &&
+                'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
             )}
           >
             {Icon && <Icon className="size-4 shrink-0" />}
@@ -80,12 +91,12 @@ function NavGroup({
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
             'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-            isActive && 'font-medium text-sidebar-foreground'
+            isActive && 'text-sidebar-foreground font-medium',
           )}
         >
           {Icon && <Icon className="size-4 shrink-0" />}
           <span className="flex-1 text-left">{item.label}</span>
-          <ChevronDown className="size-3.5 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
+          <ChevronDown className="text-muted-foreground size-3.5 transition-transform [[data-state=open]_&]:rotate-180" />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -119,8 +130,9 @@ function NavLink({
       className={cn(
         'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
-        collapsed && 'h-9 w-9 justify-center px-0'
+        isActive &&
+          'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
+        collapsed && 'h-9 w-9 justify-center px-0',
       )}
     >
       {Icon && <Icon className="size-4 shrink-0" />}
@@ -146,30 +158,38 @@ export function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { hasPermission } = usePermissions();
 
   const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.requiredPermission || hasPermission(item.requiredPermission)
+    (item) =>
+      !item.requiredPermission || hasPermission(item.requiredPermission),
   );
 
   return (
     <div
       className={cn(
-        'flex h-full flex-col bg-sidebar text-sidebar-foreground',
-        collapsed ? 'w-14' : 'w-64'
+        'bg-sidebar text-sidebar-foreground flex h-full flex-col',
+        collapsed ? 'w-14' : 'w-64',
       )}
       data-testid="sidebar-content"
     >
       <div
         className={cn(
-          'flex h-14 items-center border-b border-sidebar-border px-3',
-          collapsed && 'justify-center'
+          'border-sidebar-border flex h-14 items-center border-b px-3',
+          collapsed && 'justify-center',
         )}
       >
         {!collapsed && (
-          <span className="text-base font-semibold text-sidebar-foreground">Maco</span>
+          <span className="text-sidebar-foreground text-base font-semibold">
+            Maco
+          </span>
         )}
       </div>
-      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
         {visibleItems.map((item) => (
-          <NavGroup key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
+          <NavGroup
+            key={item.href}
+            item={item}
+            collapsed={collapsed}
+            pathname={pathname}
+          />
         ))}
       </nav>
     </div>
@@ -184,14 +204,17 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'hidden md:flex flex-col border-r border-sidebar-border h-full transition-[width] duration-200',
-          collapsed ? 'w-14' : 'w-64'
+          'border-sidebar-border hidden h-full flex-col border-r transition-[width] duration-200 md:flex',
+          collapsed ? 'w-14' : 'w-64',
         )}
         aria-label="Main navigation"
       >
         <SidebarContent collapsed={collapsed} />
         <div
-          className={cn('border-t border-sidebar-border p-2', collapsed && 'flex justify-center')}
+          className={cn(
+            'border-sidebar-border border-t p-2',
+            collapsed && 'flex justify-center',
+          )}
         >
           <Button
             variant="ghost"
@@ -207,7 +230,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex md:hidden">
           <div
             className="fixed inset-0 bg-black/50"
             onClick={onMobileClose}
@@ -215,7 +238,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             data-testid="mobile-drawer-overlay"
           />
           <aside
-            className="relative flex flex-col w-64 h-full border-r border-sidebar-border"
+            className="border-sidebar-border relative flex h-full w-64 flex-col border-r"
             aria-label="Main navigation"
           >
             <SidebarContent collapsed={false} />

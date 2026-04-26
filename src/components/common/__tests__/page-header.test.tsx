@@ -1,14 +1,19 @@
 import { render, screen } from '@testing-library/react';
+
 import { PageHeader } from '../page-header';
 
 describe('PageHeader', () => {
   it('renders title as h1', () => {
     render(<PageHeader title="Serviços" />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Serviços' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Serviços' }),
+    ).toBeInTheDocument();
   });
 
   it('renders description when provided', () => {
-    render(<PageHeader title="Serviços" description="Gerencie seus serviços" />);
+    render(
+      <PageHeader title="Serviços" description="Gerencie seus serviços" />,
+    );
     expect(screen.getByText('Gerencie seus serviços')).toBeInTheDocument();
   });
 
@@ -21,7 +26,7 @@ describe('PageHeader', () => {
     render(
       <PageHeader title="Serviços">
         <button>Add</button>
-      </PageHeader>
+      </PageHeader>,
     );
     expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
   });

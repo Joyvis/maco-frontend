@@ -52,7 +52,10 @@ export function resetAuth(): void {
 
 // ─── Token refresh queue ───────────────────────────────────────────────────────
 let isRefreshing = false;
-let refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: Error) => void }> = [];
+let refreshQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: Error) => void;
+}> = [];
 
 async function attemptTokenRefresh(): Promise<string | null> {
   if (isRefreshing) {
@@ -93,7 +96,7 @@ async function request<T>(
   method: string,
   path: string,
   options: { params?: QueryParams; body?: unknown } = {},
-  isRetry = false
+  isRetry = false,
 ): Promise<T> {
   const { params, body } = options;
   const baseUrl = env.NEXT_PUBLIC_API_URL;
@@ -103,7 +106,7 @@ async function request<T>(
     const search = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, String(v)])
+        .map(([k, v]) => [k, String(v)]),
     );
     url = `${url}?${search.toString()}`;
   }

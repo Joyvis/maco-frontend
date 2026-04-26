@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Menu, Sun, Moon, Monitor } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/providers/user-provider';
+
 import { Breadcrumbs } from './breadcrumbs';
 
 const THEME_ICONS = {
@@ -50,14 +52,15 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
 
   function cycleTheme() {
     const order: ThemeKey[] = ['light', 'dark', 'system'];
-    const next = order[(order.indexOf(currentTheme) + 1) % order.length] ?? 'system';
+    const next =
+      order[(order.indexOf(currentTheme) + 1) % order.length] ?? 'system';
     setTheme(next);
   }
 
   const ThemeIcon = THEME_ICONS[currentTheme];
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
+    <header className="bg-background flex h-14 items-center gap-3 border-b px-4">
       {/* Mobile hamburger */}
       <Button
         variant="ghost"
@@ -70,7 +73,7 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
       </Button>
 
       {/* Tenant name (left) */}
-      <span className="hidden md:block text-sm font-medium text-muted-foreground">
+      <span className="text-muted-foreground hidden text-sm font-medium md:block">
         {tenantName}
       </span>
 
@@ -94,9 +97,16 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label="User menu">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              aria-label="User menu"
+            >
               <Avatar size="sm">
-                {user.imageUrl && <AvatarImage src={user.imageUrl} alt={user.name} />}
+                {user.imageUrl && (
+                  <AvatarImage src={user.imageUrl} alt={user.name} />
+                )}
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
             </Button>

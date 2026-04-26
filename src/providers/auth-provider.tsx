@@ -1,12 +1,22 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
+
 import { configureAuth, resetAuth } from '@/services/api-client';
 import { env } from '@/config/env';
 import type { AuthContextValue, User } from '@/types/auth';
 
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined,
+);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -51,7 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               await logout();
               return null;
             }
-            const d = (await r.json()) as { access_token: string; expires_in: number };
+            const d = (await r.json()) as {
+              access_token: string;
+              expires_in: number;
+            };
             if (mountedRef.current) {
               setAccessToken(d.access_token);
               scheduleRefreshRef.current(d.expires_in);
@@ -67,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await refreshInFlightRef.current;
       }, delay);
     },
-    [logout]
+    [logout],
   );
 
   // Keep ref in sync so the timer callback always calls the latest version
@@ -109,7 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const r = await fetch('/api/auth/refresh', { method: 'POST' });
         if (!r.ok) return;
-        const d = (await r.json()) as { access_token: string; expires_in: number };
+        const d = (await r.json()) as {
+          access_token: string;
+          expires_in: number;
+        };
         const meR = await fetch(`${env.NEXT_PUBLIC_API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${d.access_token}` },
         });
@@ -147,19 +163,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(err.message ?? 'E-mail ou senha inválidos');
       }
 
-      const d = (await r.json()) as { user: User; access_token: string; expires_in: number };
+      const d = (await r.json()) as {
+        user: User;
+        access_token: string;
+        expires_in: number;
+      };
       setUser(d.user);
       setAccessToken(d.access_token);
       scheduleRefresh(d.expires_in);
     },
-    [scheduleRefresh]
+    [scheduleRefresh],
   );
 
   const tenant = user?.tenant_id ?? null;
   const isAuthenticated = user !== null;
 
   return (
-    <AuthContext.Provider value={{ user, tenant, isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, tenant, isAuthenticated, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

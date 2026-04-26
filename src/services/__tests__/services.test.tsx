@@ -1,11 +1,21 @@
-import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { serviceKeys, useServices, useService, useCreateService } from '@/services/services';
+import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+
+import { apiClient } from '@/services/api-client';
+import {
+  serviceKeys,
+  useServices,
+  useService,
+  useCreateService,
+} from '@/services/services';
 import type { PaginatedResponse, ApiResponse } from '@/types/api';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_APP_NAME: 'Maco',
+  },
 }));
 
 jest.mock('@/services/api-client', () => ({
@@ -19,14 +29,14 @@ jest.mock('@/services/api-client', () => ({
   resetAuth: jest.fn(),
 }));
 
-import { apiClient } from '@/services/api-client';
-
 function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
   };
 }
 
@@ -66,7 +76,9 @@ describe('AC-18: useServices returns data, meta, isLoading', () => {
     };
     (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
-    const { result } = renderHook(() => useServices({}), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useServices({}), {
+      wrapper: makeWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -84,7 +96,9 @@ describe('AC-18: useService returns unwrapped single item', () => {
     };
     (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
-    const { result } = renderHook(() => useService('1'), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useService('1'), {
+      wrapper: makeWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.data).toEqual(mockResponse.data);
@@ -113,7 +127,7 @@ describe('AC-19: useCreateService invalidates services list on success', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: serviceKeys.lists() })
+      expect.objectContaining({ queryKey: serviceKeys.lists() }),
     );
   });
 });

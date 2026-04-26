@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
+import { usePathname } from 'next/navigation';
+
 import { Breadcrumbs } from '../breadcrumbs';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }));
 
-import { usePathname } from 'next/navigation';
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
 
 describe('Breadcrumbs', () => {
@@ -13,7 +14,9 @@ describe('Breadcrumbs', () => {
     mockUsePathname.mockReturnValue('/dashboard');
     render(<Breadcrumbs />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Dashboard' }),
+    ).not.toBeInTheDocument();
   });
 
   it('renders Catálogo as link and Serviços as non-link for /catalogo/servicos', () => {
@@ -21,7 +24,9 @@ describe('Breadcrumbs', () => {
     render(<Breadcrumbs />);
     expect(screen.getByRole('link', { name: 'Catálogo' })).toBeInTheDocument();
     expect(screen.getByText('Serviços')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Serviços' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Serviços' }),
+    ).not.toBeInTheDocument();
   });
 
   it('maps segments using SEGMENT_LABELS', () => {

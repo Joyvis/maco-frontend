@@ -1,16 +1,22 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Topbar } from '../topbar';
+import { useTheme } from 'next-themes';
+
 import { UserProvider } from '@/providers/user-provider';
 import type { User } from '@/types/user';
 
+import { Topbar } from '../topbar';
+
 const TEST_USER: User = { name: 'Test User', email: 'test@maco.app' };
 
-function renderTopbar(props: Parameters<typeof Topbar>[0] = {}, user: User = TEST_USER) {
+function renderTopbar(
+  props: Parameters<typeof Topbar>[0] = {},
+  user: User = TEST_USER,
+) {
   return render(
     <UserProvider value={user}>
       <Topbar {...props} />
-    </UserProvider>
+    </UserProvider>,
   );
 }
 
@@ -25,15 +31,15 @@ jest.mock('next-themes', () => ({
   useTheme: jest.fn(() => ({ theme: 'light', setTheme: jest.fn() })),
 }));
 
-import { useTheme } from 'next-themes';
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
 
 describe('Topbar', () => {
   beforeEach(() => {
     mockPush.mockClear();
-    mockUseTheme.mockReturnValue({ theme: 'light', setTheme: jest.fn() } as unknown as ReturnType<
-      typeof useTheme
-    >);
+    mockUseTheme.mockReturnValue({
+      theme: 'light',
+      setTheme: jest.fn(),
+    } as unknown as ReturnType<typeof useTheme>);
   });
 
   it('renders tenant name', () => {
@@ -44,7 +50,9 @@ describe('Topbar', () => {
   it('calls onMenuClick when hamburger button is clicked', async () => {
     const onMenuClick = jest.fn();
     renderTopbar({ onMenuClick });
-    await userEvent.click(screen.getByRole('button', { name: /open navigation menu/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /open navigation menu/i }),
+    );
     expect(onMenuClick).toHaveBeenCalledTimes(1);
   });
 
@@ -58,21 +66,27 @@ describe('Topbar', () => {
 
   it('cycles theme from light to dark when theme toggle is clicked', async () => {
     const setTheme = jest.fn();
-    mockUseTheme.mockReturnValue({ theme: 'light', setTheme } as unknown as ReturnType<
-      typeof useTheme
-    >);
+    mockUseTheme.mockReturnValue({
+      theme: 'light',
+      setTheme,
+    } as unknown as ReturnType<typeof useTheme>);
     renderTopbar();
-    await userEvent.click(screen.getByRole('button', { name: /switch theme.*light/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /switch theme.*light/i }),
+    );
     expect(setTheme).toHaveBeenCalledWith('dark');
   });
 
   it('cycles theme from dark to system when theme toggle is clicked', async () => {
     const setTheme = jest.fn();
-    mockUseTheme.mockReturnValue({ theme: 'dark', setTheme } as unknown as ReturnType<
-      typeof useTheme
-    >);
+    mockUseTheme.mockReturnValue({
+      theme: 'dark',
+      setTheme,
+    } as unknown as ReturnType<typeof useTheme>);
     renderTopbar();
-    await userEvent.click(screen.getByRole('button', { name: /switch theme.*dark/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /switch theme.*dark/i }),
+    );
     expect(setTheme).toHaveBeenCalledWith('system');
   });
 

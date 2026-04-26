@@ -6,7 +6,10 @@ const _env = envSchema.safeParse({
 });
 
 if (!_env.success) {
-  console.error('Invalid environment variables:', _env.error.flatten().fieldErrors);
+  console.error(
+    'Invalid environment variables:',
+    _env.error.flatten().fieldErrors,
+  );
   throw new Error('Invalid environment variables');
 }
 

@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+
 import { LoadingSkeleton } from '../loading-skeleton';
 
 describe('LoadingSkeleton', () => {
@@ -10,8 +11,12 @@ describe('LoadingSkeleton', () => {
   it('renders a content region with header strip and body', () => {
     render(<LoadingSkeleton />);
     const content = screen.getByTestId('loading-skeleton-content');
-    expect(within(content).getByTestId('loading-skeleton-content-header')).toBeInTheDocument();
-    expect(within(content).getByTestId('loading-skeleton-content-body')).toBeInTheDocument();
+    expect(
+      within(content).getByTestId('loading-skeleton-content-header'),
+    ).toBeInTheDocument();
+    expect(
+      within(content).getByTestId('loading-skeleton-content-body'),
+    ).toBeInTheDocument();
   });
 
   it('renders animated skeleton primitives (animate-pulse)', () => {
@@ -22,6 +27,8 @@ describe('LoadingSkeleton', () => {
 
   it('exposes a status role for assistive tech', () => {
     render(<LoadingSkeleton />);
-    expect(screen.getByRole('status', { name: /carregando/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: /carregando/i }),
+    ).toBeInTheDocument();
   });
 });

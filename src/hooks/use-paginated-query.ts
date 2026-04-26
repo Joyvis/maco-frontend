@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+
 import type { PaginatedResponse } from '@/types/api';
 
 interface PaginationParams {
@@ -17,7 +18,7 @@ interface PaginatedQueryOptions {
 export function usePaginatedQuery<T>(
   keyFactory: (params: PaginationParams) => readonly unknown[],
   fetcher: (params: PaginationParams) => Promise<PaginatedResponse<T>>,
-  options: PaginatedQueryOptions = {}
+  options: PaginatedQueryOptions = {},
 ) {
   const { initialPage = 1, pageSize = 10 } = options;
   const [page, setPage] = useState(initialPage);
