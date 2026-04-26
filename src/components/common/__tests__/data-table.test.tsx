@@ -64,7 +64,7 @@ describe('DataTable', () => {
     render(<DataTable columns={columns} data={data} pageSize={10} />);
     mockReplace.mockClear();
     await userEvent.click(screen.getByRole('button', { name: /next page/i }));
-    expect(mockReplace).toHaveBeenCalledWith('/test?page=1');
+    expect(mockReplace).toHaveBeenCalledWith('/test?page=1', { scroll: false });
   });
 
   it('removes page param from URL when back on first page', async () => {
@@ -74,5 +74,22 @@ describe('DataTable', () => {
     await userEvent.click(screen.getByRole('button', { name: /previous page/i }));
     const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1]?.[0] as string;
     expect(lastCall).not.toMatch(/[?&]page=/);
+  });
+
+  it('preserves non-page params when navigating between pages', async () => {
+    const { useSearchParams } = jest.requireMock('next/navigation') as {
+      useSearchParams: jest.Mock;
+    };
+    useSearchParams.mockReturnValue(new URLSearchParams('filter=active'));
+    try {
+      render(<DataTable columns={columns} data={data} pageSize={10} />);
+      mockReplace.mockClear();
+      await userEvent.click(screen.getByRole('button', { name: /next page/i }));
+      const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1]?.[0] as string;
+      expect(lastCall).toContain('filter=active');
+      expect(lastCall).toContain('page=1');
+    } finally {
+      useSearchParams.mockReturnValue(new URLSearchParams());
+    }
   });
 });

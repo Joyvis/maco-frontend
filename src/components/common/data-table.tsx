@@ -54,12 +54,13 @@ export function DataTable<TData>({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Refs keep the effect deps minimal while always reading the latest values,
-  // preventing stale-closure drops of non-page URL params on page change.
-  const routerRef = useRef(router);
-  routerRef.current = router;
+  // Ref always reads the latest searchParams without retriggering the URL-write
+  // effect on every navigation, so non-page params (filters set elsewhere)
+  // aren't dropped when pageIndex changes.
   const searchParamsRef = useRef(searchParams);
-  searchParamsRef.current = searchParams;
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -76,8 +77,8 @@ export function DataTable<TData>({
       params.set('page', String(pagination.pageIndex));
     }
     const query = params.toString();
-    routerRef.current.replace(`${pathname}${query ? `?${query}` : ''}`);
-  }, [pagination.pageIndex, pathname]);
+    router.replace(`${pathname}${query ? `?${query}` : ''}`, { scroll: false });
+  }, [pagination.pageIndex, pathname, router]);
 
   const table = useReactTable({
     data,

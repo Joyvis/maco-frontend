@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUser } from '@/providers/user-provider';
 import { Breadcrumbs } from './breadcrumbs';
 
 const THEME_ICONS = {
@@ -22,12 +23,6 @@ const THEME_ICONS = {
 } as const;
 
 type ThemeKey = keyof typeof THEME_ICONS;
-
-const MOCK_USER = {
-  name: 'Usuário',
-  email: 'usuario@maco.app',
-  imageUrl: undefined as string | undefined,
-};
 
 function getInitials(name: string): string {
   return name
@@ -50,6 +45,7 @@ interface TopbarProps {
 export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const user = useUser();
   const currentTheme = (theme as ThemeKey | undefined) ?? 'system';
 
   function cycleTheme() {
@@ -100,10 +96,8 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label="User menu">
               <Avatar size="sm">
-                {MOCK_USER.imageUrl && (
-                  <AvatarImage src={MOCK_USER.imageUrl} alt={MOCK_USER.name} />
-                )}
-                <AvatarFallback>{getInitials(MOCK_USER.name)}</AvatarFallback>
+                {user.imageUrl && <AvatarImage src={user.imageUrl} alt={user.name} />}
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

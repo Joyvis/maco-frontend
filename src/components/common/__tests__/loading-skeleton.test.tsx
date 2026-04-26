@@ -1,21 +1,27 @@
-import { render } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { LoadingSkeleton } from '../loading-skeleton';
 
 describe('LoadingSkeleton', () => {
-  it('renders sidebar and content area layout', () => {
-    const { container } = render(<LoadingSkeleton />);
-    const root = container.firstElementChild;
-    expect(root).toBeInTheDocument();
-    // Two panels: sidebar (left) + content (right)
-    expect(root?.children.length).toBe(2);
+  it('renders a sidebar region', () => {
+    render(<LoadingSkeleton />);
+    expect(screen.getByTestId('loading-skeleton-sidebar')).toBeInTheDocument();
   });
 
-  it('renders skeleton items in the sidebar panel', () => {
+  it('renders a content region with header strip and body', () => {
+    render(<LoadingSkeleton />);
+    const content = screen.getByTestId('loading-skeleton-content');
+    expect(within(content).getByTestId('loading-skeleton-content-header')).toBeInTheDocument();
+    expect(within(content).getByTestId('loading-skeleton-content-body')).toBeInTheDocument();
+  });
+
+  it('renders animated skeleton primitives (animate-pulse)', () => {
     const { container } = render(<LoadingSkeleton />);
-    const sidebarPanel = container.firstElementChild?.firstElementChild;
-    // Header skeleton + 5 nav-item skeletons
-    expect(
-      sidebarPanel?.querySelectorAll('[class*="animate-pulse"]').length
-    ).toBeGreaterThanOrEqual(6);
+    const pulses = container.querySelectorAll('.animate-pulse');
+    expect(pulses.length).toBeGreaterThan(0);
+  });
+
+  it('exposes a status role for assistive tech', () => {
+    render(<LoadingSkeleton />);
+    expect(screen.getByRole('status', { name: /carregando/i })).toBeInTheDocument();
   });
 });

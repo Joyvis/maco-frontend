@@ -1,6 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Topbar } from '../topbar';
+import { UserProvider } from '@/providers/user-provider';
+import type { User } from '@/types/user';
+
+const TEST_USER: User = { name: 'Test User', email: 'test@maco.app' };
+
+function renderTopbar(props: Parameters<typeof Topbar>[0] = {}, user: User = TEST_USER) {
+  return render(
+    <UserProvider value={user}>
+      <Topbar {...props} />
+    </UserProvider>
+  );
+}
 
 const mockPush = jest.fn();
 
@@ -25,19 +37,19 @@ describe('Topbar', () => {
   });
 
   it('renders tenant name', () => {
-    render(<Topbar tenantName="Test Corp" />);
+    renderTopbar({ tenantName: 'Test Corp' });
     expect(screen.getByText('Test Corp')).toBeInTheDocument();
   });
 
   it('calls onMenuClick when hamburger button is clicked', async () => {
     const onMenuClick = jest.fn();
-    render(<Topbar onMenuClick={onMenuClick} />);
+    renderTopbar({ onMenuClick });
     await userEvent.click(screen.getByRole('button', { name: /open navigation menu/i }));
     expect(onMenuClick).toHaveBeenCalledTimes(1);
   });
 
   it('opens user dropdown and shows Perfil, Configurações, Sair', async () => {
-    render(<Topbar />);
+    renderTopbar();
     await userEvent.click(screen.getByRole('button', { name: /user menu/i }));
     expect(screen.getByText('Perfil')).toBeInTheDocument();
     expect(screen.getByText('Configurações')).toBeInTheDocument();
@@ -49,7 +61,7 @@ describe('Topbar', () => {
     mockUseTheme.mockReturnValue({ theme: 'light', setTheme } as unknown as ReturnType<
       typeof useTheme
     >);
-    render(<Topbar />);
+    renderTopbar();
     await userEvent.click(screen.getByRole('button', { name: /switch theme.*light/i }));
     expect(setTheme).toHaveBeenCalledWith('dark');
   });
@@ -59,15 +71,20 @@ describe('Topbar', () => {
     mockUseTheme.mockReturnValue({ theme: 'dark', setTheme } as unknown as ReturnType<
       typeof useTheme
     >);
-    render(<Topbar />);
+    renderTopbar();
     await userEvent.click(screen.getByRole('button', { name: /switch theme.*dark/i }));
     expect(setTheme).toHaveBeenCalledWith('system');
   });
 
   it('navigates to /login when Sair is selected', async () => {
-    render(<Topbar />);
+    renderTopbar();
     await userEvent.click(screen.getByRole('button', { name: /user menu/i }));
     await userEvent.click(screen.getByText('Sair'));
     expect(mockPush).toHaveBeenCalledWith('/login');
+  });
+
+  it('renders avatar fallback initials from the provided user name', () => {
+    renderTopbar({}, { name: 'Ana Silva', email: 'ana@maco.app' });
+    expect(screen.getByText('AS')).toBeInTheDocument();
   });
 });
