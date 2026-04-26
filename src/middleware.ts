@@ -33,9 +33,9 @@ export async function middleware(request: NextRequest) {
       });
       if (refreshRes.ok) {
         const response = NextResponse.next();
-        // Forward Set-Cookie from refresh response to client
-        const setCookie = refreshRes.headers.get('set-cookie');
-        if (setCookie) response.headers.set('set-cookie', setCookie);
+        for (const v of refreshRes.headers.getSetCookie()) {
+          response.headers.append('set-cookie', v);
+        }
         return response;
       }
     }
@@ -55,8 +55,9 @@ export async function middleware(request: NextRequest) {
       });
       if (refreshRes.ok) {
         const response = NextResponse.next();
-        const setCookie = refreshRes.headers.get('set-cookie');
-        if (setCookie) response.headers.set('set-cookie', setCookie);
+        for (const v of refreshRes.headers.getSetCookie()) {
+          response.headers.append('set-cookie', v);
+        }
         return response;
       }
     }

@@ -142,6 +142,14 @@ describe('AC-3: returnTo redirect', () => {
   });
 });
 
+// ─── Task 6: already-authenticated redirect ──────────────────────────────────
+describe('Task 6: redirect authenticated users away from login', () => {
+  it('calls router.replace("/dashboard") when isAuthenticated is true', async () => {
+    renderLoginPage({ isAuthenticated: true });
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/dashboard'));
+  });
+});
+
 // ─── AC-2: API failure shows error message ───────────────────────────────────
 describe('AC-2: API failure shows error alert', () => {
   it('shows error alert when login throws', async () => {

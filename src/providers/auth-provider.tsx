@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mountedRef.current) {
           setUser(userData);
           setAccessToken(d.access_token);
-          scheduleRefresh(d.expires_in);
+          scheduleRefreshRef.current(d.expires_in);
         }
       } finally {
         if (mountedRef.current) setIsLoading(false);
@@ -122,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mountedRef.current = false;
       clearTimer();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = useCallback(
