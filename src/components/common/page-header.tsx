@@ -21,3 +21,6 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
     </div>
   );
 }
+
+/** Page header with title and optional actions slot. */
+export default PageHeader;
