@@ -82,9 +82,7 @@ describe('AC-4: client-side validation shows inline errors', () => {
     await userEvent.type(screen.getByLabelText(/senha/i), 'short');
     await userEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
-    expect(
-      await screen.findByText('A senha deve ter pelo menos 8 caracteres')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('A senha deve ter pelo menos 8 caracteres')).toBeInTheDocument();
     expect(login).not.toHaveBeenCalled();
   });
 });
@@ -117,6 +115,30 @@ describe('AC-3: returnTo redirect', () => {
     await userEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/settings'));
+  });
+
+  it('falls back to /dashboard when returnTo is an absolute URL (open redirect guard)', async () => {
+    const login = jest.fn().mockResolvedValue(undefined);
+    mockGet.mockImplementation((key: string) => (key === 'returnTo' ? 'https://evil.com' : null));
+    renderLoginPage({ login });
+
+    await userEvent.type(screen.getByLabelText(/e-mail/i), 'user@example.com');
+    await userEvent.type(screen.getByLabelText(/senha/i), 'password123');
+    await userEvent.click(screen.getByRole('button', { name: /entrar/i }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard'));
+  });
+
+  it('falls back to /dashboard when returnTo starts with // (protocol-relative redirect)', async () => {
+    const login = jest.fn().mockResolvedValue(undefined);
+    mockGet.mockImplementation((key: string) => (key === 'returnTo' ? '//evil.com' : null));
+    renderLoginPage({ login });
+
+    await userEvent.type(screen.getByLabelText(/e-mail/i), 'user@example.com');
+    await userEvent.type(screen.getByLabelText(/senha/i), 'password123');
+    await userEvent.click(screen.getByRole('button', { name: /entrar/i }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard'));
   });
 });
 

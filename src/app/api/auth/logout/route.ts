@@ -1,10 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import {
-  COOKIE_ACCESS_TOKEN,
-  COOKIE_REFRESH_TOKEN,
-  clearCookieOptions,
-} from '@/lib/auth/cookies';
+import { COOKIE_ACCESS_TOKEN, COOKIE_REFRESH_TOKEN, clearCookieOptions } from '@/lib/auth/cookies';
 
 export async function POST() {
   const cookieStore = await cookies();

@@ -25,10 +25,7 @@ export async function POST(request: Request) {
   if (!backendRes.ok) {
     const err = (await backendRes.json().catch(() => ({}))) as { message?: string };
     const status = backendRes.status === 401 ? 401 : 400;
-    return NextResponse.json(
-      { message: err.message ?? 'E-mail ou senha inválidos' },
-      { status }
-    );
+    return NextResponse.json({ message: err.message ?? 'E-mail ou senha inválidos' }, { status });
   }
 
   const tokens = (await backendRes.json()) as AuthTokens;
@@ -44,7 +41,11 @@ export async function POST(request: Request) {
   const user = (await meRes.json()) as User;
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_ACCESS_TOKEN, tokens.access_token, accessTokenCookieOptions(tokens.expires_in));
+  cookieStore.set(
+    COOKIE_ACCESS_TOKEN,
+    tokens.access_token,
+    accessTokenCookieOptions(tokens.expires_in)
+  );
   cookieStore.set(COOKIE_REFRESH_TOKEN, tokens.refresh_token, refreshTokenCookieOptions());
 
   return NextResponse.json({

@@ -8,14 +8,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'E-mail é obrigatório')
-    .email('Formato de e-mail inválido'),
+  email: z.string().min(1, 'E-mail é obrigatório').email('Formato de e-mail inválido'),
   password: z
     .string()
     .min(1, 'Senha é obrigatória')
@@ -44,7 +48,8 @@ export default function LoginPage() {
     setFormError(null);
     try {
       await login(data.email, data.password);
-      const returnTo = searchParams.get('returnTo') ?? '/dashboard';
+      const raw = searchParams.get('returnTo') ?? '';
+      const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard';
       router.push(returnTo);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'E-mail ou senha inválidos');
@@ -62,11 +67,7 @@ export default function LoginPage() {
         </div>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            noValidate
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
             {formError && (
               <div
                 role="alert"
@@ -116,11 +117,7 @@ export default function LoginPage() {
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={form.formState.isSubmitting}
-            >
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Entrando…' : 'Entrar'}
             </Button>
           </form>

@@ -63,12 +63,10 @@ async function attemptTokenRefresh(): Promise<string | null> {
 
   isRefreshing = true;
   try {
-    const refreshToken = authConfig.getRefreshToken();
-    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
+    // Call the Next.js route handler so it can read the httpOnly refresh-token cookie.
+    // Hitting the backend directly would require the refresh token in JS, which is
+    // intentionally inaccessible.
+    const response = await fetch('/api/auth/refresh', { method: 'POST' });
 
     if (!response.ok) {
       const err = new Error('Session expired. Please log in again.');

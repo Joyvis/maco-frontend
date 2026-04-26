@@ -39,13 +39,7 @@ function Inspector() {
 
 function LoginButton() {
   const { login } = useAuthContext();
-  return (
-    <button
-      onClick={() => void login('user@example.com', 'password123')}
-    >
-      Login
-    </button>
-  );
+  return <button onClick={() => void login('user@example.com', 'password123')}>Login</button>;
 }
 
 function LogoutButton() {
@@ -58,7 +52,11 @@ function fetchOk(body: unknown) {
 }
 
 function fetchFail(status = 401) {
-  return { ok: false, status, json: async () => ({ message: 'E-mail ou senha inválidos' }) } as Response;
+  return {
+    ok: false,
+    status,
+    json: async () => ({ message: 'E-mail ou senha inválidos' }),
+  } as Response;
 }
 
 beforeEach(() => {
@@ -116,7 +114,8 @@ describe('AC-1: login() updates auth state', () => {
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
-      .mockResolvedValueOnce( // login
+      .mockResolvedValueOnce(
+        // login
         fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })
       );
 

@@ -29,7 +29,11 @@ export async function POST() {
 
   const tokens = (await backendRes.json()) as AuthTokens;
 
-  cookieStore.set(COOKIE_ACCESS_TOKEN, tokens.access_token, accessTokenCookieOptions(tokens.expires_in));
+  cookieStore.set(
+    COOKIE_ACCESS_TOKEN,
+    tokens.access_token,
+    accessTokenCookieOptions(tokens.expires_in)
+  );
   cookieStore.set(COOKIE_REFRESH_TOKEN, tokens.refresh_token, refreshTokenCookieOptions());
 
   return NextResponse.json({
