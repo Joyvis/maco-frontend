@@ -59,11 +59,19 @@ describe('secure flag in production environment', () => {
   const originalNodeEnv = process.env['NODE_ENV'];
 
   beforeEach(() => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true, configurable: true });
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: originalNodeEnv, writable: true, configurable: true });
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: originalNodeEnv,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('accessTokenCookieOptions secure is true in production', () => {
