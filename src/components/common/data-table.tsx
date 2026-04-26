@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   flexRender,
@@ -54,6 +54,13 @@ export function DataTable<TData>({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Refs keep the effect deps minimal while always reading the latest values,
+  // preventing stale-closure drops of non-page URL params on page change.
+  const routerRef = useRef(router);
+  routerRef.current = router;
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [pagination, setPagination] = useState<PaginationState>(() => ({
@@ -62,15 +69,14 @@ export function DataTable<TData>({
   }));
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParamsRef.current.toString());
     if (pagination.pageIndex === 0) {
       params.delete('page');
     } else {
       params.set('page', String(pagination.pageIndex));
     }
     const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ''}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    routerRef.current.replace(`${pathname}${query ? `?${query}` : ''}`);
   }, [pagination.pageIndex, pathname]);
 
   const table = useReactTable({
