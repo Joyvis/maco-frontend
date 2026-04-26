@@ -444,7 +444,9 @@ describe('configureAuth setup error scenarios', () => {
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
-      .mockResolvedValueOnce(fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })); // login
+      .mockResolvedValueOnce(
+        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })
+      ); // login
 
     const errSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
