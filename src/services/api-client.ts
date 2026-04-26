@@ -30,7 +30,11 @@ let authConfig: AuthConfig = {
 };
 
 export function configureAuth(config: AuthConfig): void {
-  authConfig = config;
+  authConfig = {
+    onUnauthorized: defaultOnUnauthorized,
+    onForbidden: defaultOnForbidden,
+    ...config,
+  };
 }
 
 export function resetAuth(): void {
@@ -97,7 +101,7 @@ async function request<T>(
   if (params && Object.keys(params).length > 0) {
     const search = new URLSearchParams(
       Object.entries(params)
-        .filter(([, v]) => v !== undefined && v !== null)
+        .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)])
     );
     url = `${url}?${search.toString()}`;
