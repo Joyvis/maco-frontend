@@ -4,6 +4,7 @@
 
 - Next.js 16 (App Router), TypeScript 5 strict, Tailwind CSS 4, shadcn/ui (New York style)
 - React 19, Zod for runtime validation, Jest + ts-jest for unit tests
+- TanStack Query v5 (`@tanstack/react-query`) for server-state cache; Devtools auto-included in dev only
 
 ## Layout
 
@@ -35,6 +36,10 @@ npm test         # Jest unit tests
 - `noUncheckedIndexedAccess: true` — array/object access returns `T | undefined`
 - Add new shadcn/ui components via `npx shadcn@latest add <component>` — never edit `src/components/ui/` manually
 - Copy `.env.example` to `.env.local` before running locally; `src/config/env.ts` throws at startup if vars are missing/invalid
+- **API client** (`services/api-client.ts`): native `fetch` wrapper — no axios. Call `configureAuth(config)` once (e.g. in auth provider) to inject token/tenantId getters. Handles 401 refresh with queuing, 403/5xx/network errors.
+- **Auth wiring**: `configureAuth` accepts `{ getToken, getRefreshToken, getTenantId, onTokenRefreshed }`. Auth provider must call this; until then headers are omitted.
+- **Query keys**: use factory pattern (see `serviceKeys` in `services/services.ts`) for all resources — enables targeted cache invalidation.
+- **Pagination**: `usePaginatedQuery(keyFactory, fetcher, { pageSize })` in `hooks/use-paginated-query.ts` — offset-based only; cursor-based deferred.
 
 ## App Shell (MACO-58)
 

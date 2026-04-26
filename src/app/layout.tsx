@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { QueryProvider } from '@/providers/query-provider';
 import './globals.css';
 
 const geistSans = Geist({
@@ -32,7 +33,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="maco-theme">
-          {children}
+          <QueryProvider>{children}</QueryProvider>
           <Toaster position="bottom-right" duration={5000} closeButton />
         </ThemeProvider>
       </body>
