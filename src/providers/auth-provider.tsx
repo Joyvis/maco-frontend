@@ -77,20 +77,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Wire api-client whenever token/user changes
   useEffect(() => {
-    if (accessToken) {
-      configureAuth({
-        getToken: () => accessToken,
-        getRefreshToken: () => null,
-        getTenantId: () => user?.tenant_id ?? null,
-        onTokenRefreshed: (t) => {
-          if (mountedRef.current) setAccessToken(t);
-        },
-        onUnauthorized: () => {
-          void logout();
-        },
-      });
-    } else {
-      resetAuth();
+    try {
+      if (accessToken) {
+        configureAuth({
+          getToken: () => accessToken,
+          getRefreshToken: () => null,
+          getTenantId: () => user?.tenant_id ?? null,
+          onTokenRefreshed: (t) => {
+            if (mountedRef.current) setAccessToken(t);
+          },
+          onUnauthorized: () => {
+            void logout();
+          },
+        });
+      } else {
+        resetAuth();
+      }
+    } catch (err) {
+      // configureAuth/resetAuth setup failure must not crash the provider —
+      // the auth state remains valid; the api-client will fall back to its
+      // default (no-token) config.
+      console.error('Failed to configure api-client auth', err);
     }
   }, [accessToken, user, logout]);
 
@@ -113,6 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAccessToken(d.access_token);
           scheduleRefreshRef.current(d.expires_in);
         }
+      } catch {
+        // Network error or configureAuth setup failure — fall through and
+        // remain unauthenticated. Avoids unhandled promise rejection.
       } finally {
         if (mountedRef.current) setIsLoading(false);
       }

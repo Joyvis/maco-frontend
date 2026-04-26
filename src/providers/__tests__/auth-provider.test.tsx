@@ -399,3 +399,76 @@ describe('mount session hydration: /users/me failure', () => {
     expect(screen.getByTestId('user').textContent).toBe('null');
   });
 });
+
+// ─── configureAuth setup error scenarios ────────────────────────────────────
+describe('configureAuth setup error scenarios', () => {
+  it('resolves loading=false and stays unauthenticated when refresh fetch throws on mount', async () => {
+    global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network error')); // mount refresh throws
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    expect(screen.getByTestId('user').textContent).toBe('null');
+    expect(mockConfigureAuth).not.toHaveBeenCalled();
+  });
+
+  it('resolves loading=false and stays unauthenticated when /users/me fetch throws on mount', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh ok
+      .mockRejectedValueOnce(new Error('Network error')); // /users/me throws
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    expect(screen.getByTestId('user').textContent).toBe('null');
+    expect(mockConfigureAuth).not.toHaveBeenCalled();
+  });
+
+  it('does not crash the provider when configureAuth itself throws during setup', async () => {
+    // Login flow triggers the configureAuth wiring useEffect; force it to throw
+    mockConfigureAuth.mockImplementationOnce(() => {
+      throw new Error('configureAuth setup failed');
+    });
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
+      .mockResolvedValueOnce(fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })); // login
+
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { getByText } = render(
+      <AuthProvider>
+        <Inspector />
+        <LoginButton />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+
+    let loginPromise: Promise<unknown> | undefined;
+    await act(async () => {
+      // login sets state — the resulting useEffect calls configureAuth which throws.
+      // React surfaces the effect error; the auth state itself is set before the throw.
+      loginPromise = Promise.resolve().then(() => getByText('Login').click());
+    });
+    await loginPromise;
+
+    // Auth state was set before the throw — provider remains usable
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('user@example.com'));
+    expect(mockConfigureAuth).toHaveBeenCalled();
+
+    errSpy.mockRestore();
+  });
+});
