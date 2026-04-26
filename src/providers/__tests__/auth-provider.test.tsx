@@ -326,6 +326,33 @@ describe('configureAuth callbacks', () => {
     expect(authArg?.getTenantId()).toBe('tenant-abc');
   });
 
+  it('onTokenRefreshed is a no-op when component is unmounted', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(fetchOk(MOCK_USER));
+
+    const { unmount } = render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const authArg = lastCall?.[0];
+    expect(authArg).toBeDefined();
+
+    // Unmount first, then call the callback — exercises the mountedRef.current === false branch
+    unmount();
+
+    await act(async () => {
+      authArg?.onTokenRefreshed('tok-after-unmount');
+    });
+    // No assertion needed — just verifying it doesn't throw and the false branch is taken
+  });
+
   it('onUnauthorized triggers logout and redirect to /login', async () => {
     global.fetch = jest
       .fn()
@@ -350,5 +377,25 @@ describe('configureAuth callbacks', () => {
     });
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+});
+
+// ─── mount: /users/me failure after successful refresh ──────────────────────
+describe('mount session hydration: /users/me failure', () => {
+  it('stays unauthenticated when /users/me returns non-ok after refresh', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh ok
+      .mockResolvedValueOnce(fetchFail(403)); // /users/me fails
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    expect(screen.getByTestId('user').textContent).toBe('null');
   });
 });

@@ -54,3 +54,30 @@ describe('clearCookieOptions', () => {
     expect(opts.secure).toBe(false);
   });
 });
+
+describe('secure flag in production environment', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+
+  beforeEach(() => {
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true, configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalNodeEnv, writable: true, configurable: true });
+  });
+
+  it('accessTokenCookieOptions secure is true in production', () => {
+    const opts = accessTokenCookieOptions(900);
+    expect(opts.secure).toBe(true);
+  });
+
+  it('refreshTokenCookieOptions secure is true in production', () => {
+    const opts = refreshTokenCookieOptions();
+    expect(opts.secure).toBe(true);
+  });
+
+  it('clearCookieOptions secure is true in production', () => {
+    const opts = clearCookieOptions();
+    expect(opts.secure).toBe(true);
+  });
+});
