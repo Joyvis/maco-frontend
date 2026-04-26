@@ -1,24 +1,25 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { usePathname } from 'next/navigation';
+import type { MockedFunction } from 'vitest';
 
 import { usePermissions } from '@/providers/permissions-provider';
 import type { Permission } from '@/types/permissions';
 
 import { Sidebar } from '../sidebar';
 
-jest.mock('next/navigation', () => ({
-  usePathname: jest.fn().mockReturnValue('/dashboard'),
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn().mockReturnValue('/dashboard'),
 }));
 
-jest.mock('@/providers/permissions-provider', () => ({
-  usePermissions: jest.fn(() => ({
+vi.mock('@/providers/permissions-provider', () => ({
+  usePermissions: vi.fn(() => ({
     hasPermission: () => true,
     permissions: [] as Permission[],
   })),
 }));
 
-jest.mock('@/components/ui/tooltip', () => ({
+vi.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
   Tooltip: ({ children }: { children: React.ReactNode }) => children,
   TooltipTrigger: ({
@@ -32,8 +33,8 @@ jest.mock('@/components/ui/tooltip', () => ({
   ),
 }));
 
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
-const mockUsePermissions = usePermissions as jest.MockedFunction<
+const mockUsePathname = usePathname as MockedFunction<typeof usePathname>;
+const mockUsePermissions = usePermissions as MockedFunction<
   typeof usePermissions
 >;
 
@@ -100,10 +101,10 @@ describe('Sidebar', () => {
     expect(navigations.length).toBeGreaterThan(0);
   });
 
-  it('calls onMobileClose when overlay is clicked', () => {
-    const onMobileClose = jest.fn();
+  it('calls onMobileClose when overlay is clicked', async () => {
+    const onMobileClose = vi.fn();
     renderSidebar({ mobileOpen: true, onMobileClose });
-    fireEvent.click(screen.getByTestId('mobile-drawer-overlay'));
+    await userEvent.click(screen.getByTestId('mobile-drawer-overlay'));
     expect(onMobileClose).toHaveBeenCalledTimes(1);
   });
 

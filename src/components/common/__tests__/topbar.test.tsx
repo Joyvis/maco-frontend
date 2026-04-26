@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useTheme } from 'next-themes';
+import type { MockedFunction } from 'vitest';
 
 import { UserProvider } from '@/providers/user-provider';
 import type { User } from '@/types/user';
@@ -20,25 +21,25 @@ function renderTopbar(
   );
 }
 
-const mockPush = jest.fn();
+const mockPush = vi.fn();
 
-jest.mock('next/navigation', () => ({
-  usePathname: jest.fn().mockReturnValue('/dashboard'),
-  useRouter: jest.fn(() => ({ push: mockPush })),
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn().mockReturnValue('/dashboard'),
+  useRouter: vi.fn(() => ({ push: mockPush })),
 }));
 
-jest.mock('next-themes', () => ({
-  useTheme: jest.fn(() => ({ theme: 'light', setTheme: jest.fn() })),
+vi.mock('next-themes', () => ({
+  useTheme: vi.fn(() => ({ theme: 'light', setTheme: vi.fn() })),
 }));
 
-const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
+const mockUseTheme = useTheme as MockedFunction<typeof useTheme>;
 
 describe('Topbar', () => {
   beforeEach(() => {
     mockPush.mockClear();
     mockUseTheme.mockReturnValue({
       theme: 'light',
-      setTheme: jest.fn(),
+      setTheme: vi.fn(),
     } as unknown as ReturnType<typeof useTheme>);
   });
 
@@ -48,7 +49,7 @@ describe('Topbar', () => {
   });
 
   it('calls onMenuClick when hamburger button is clicked', async () => {
-    const onMenuClick = jest.fn();
+    const onMenuClick = vi.fn();
     renderTopbar({ onMenuClick });
     await userEvent.click(
       screen.getByRole('button', { name: /open navigation menu/i }),
@@ -65,7 +66,7 @@ describe('Topbar', () => {
   });
 
   it('cycles theme from light to dark when theme toggle is clicked', async () => {
-    const setTheme = jest.fn();
+    const setTheme = vi.fn();
     mockUseTheme.mockReturnValue({
       theme: 'light',
       setTheme,
@@ -78,7 +79,7 @@ describe('Topbar', () => {
   });
 
   it('cycles theme from dark to system when theme toggle is clicked', async () => {
-    const setTheme = jest.fn();
+    const setTheme = vi.fn();
     mockUseTheme.mockReturnValue({
       theme: 'dark',
       setTheme,

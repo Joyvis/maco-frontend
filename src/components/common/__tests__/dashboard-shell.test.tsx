@@ -1,16 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { usePathname } from 'next/navigation';
+import type { MockedFunction } from 'vitest';
 
 import { DashboardShell } from '../dashboard-shell';
 
-jest.mock('next/navigation', () => ({
-  usePathname: jest.fn().mockReturnValue('/dashboard'),
-  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn() })),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn().mockReturnValue('/dashboard'),
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
-jest.mock('../sidebar', () => ({
+vi.mock('../sidebar', () => ({
   Sidebar: ({
     mobileOpen,
     onMobileClose,
@@ -24,7 +25,7 @@ jest.mock('../sidebar', () => ({
   ),
 }));
 
-jest.mock('../topbar', () => ({
+vi.mock('../topbar', () => ({
   Topbar: ({ onMenuClick }: { onMenuClick: () => void }) => (
     <button data-testid="menu-button" onClick={onMenuClick}>
       menu
@@ -32,7 +33,7 @@ jest.mock('../topbar', () => ({
   ),
 }));
 
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+const mockUsePathname = usePathname as MockedFunction<typeof usePathname>;
 
 describe('DashboardShell', () => {
   beforeEach(() => {

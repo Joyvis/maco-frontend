@@ -75,7 +75,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm exec jest --coverage
+      - run: pnpm exec vitest run --coverage
 
   build:
     name: Build

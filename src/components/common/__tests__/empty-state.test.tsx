@@ -25,7 +25,7 @@ describe('EmptyState', () => {
         title="No items"
         description="Nothing"
         actionLabel="Add item"
-        onAction={jest.fn()}
+        onAction={vi.fn()}
       />,
     );
     expect(
@@ -34,7 +34,7 @@ describe('EmptyState', () => {
   });
 
   it('calls onAction when CTA button is clicked', async () => {
-    const onAction = jest.fn();
+    const onAction = vi.fn();
     render(
       <EmptyState
         title="No items"

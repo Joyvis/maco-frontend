@@ -1,13 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
+import type { MockedFunction } from 'vitest';
 
 import { Breadcrumbs } from '../breadcrumbs';
 
-jest.mock('next/navigation', () => ({
-  usePathname: jest.fn(),
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(),
 }));
 
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+const mockUsePathname = usePathname as MockedFunction<typeof usePathname>;
 
 describe('Breadcrumbs', () => {
   it('renders single segment without link for /dashboard', () => {

@@ -1,5 +1,5 @@
 // jose uses ESM — mock it with a CJS-compatible implementation
-jest.mock('jose', () => ({
+vi.mock('jose', () => ({
   decodeJwt: (token: string) => {
     const parts = token.split('.');
     if (parts.length !== 3) throw new Error('Invalid JWT');

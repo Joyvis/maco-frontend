@@ -29,7 +29,7 @@ describe('PermissionsProvider', () => {
   });
 
   it('throws when usePermissions is used outside provider', () => {
-    const consoleError = jest
+    const consoleError = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
     expect(() =>

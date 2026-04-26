@@ -6,18 +6,18 @@ import { AuthContext } from '@/providers/auth-provider';
 import type { AuthContextValue } from '@/types/auth';
 import LoginPage from '@/app/(auth)/login/page';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
   },
 }));
 
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
-const mockGet = jest.fn<string | null, [string]>().mockReturnValue(null);
+const mockPush = vi.fn();
+const mockReplace = vi.fn();
+const mockGet = vi.fn<(key: string) => string | null>().mockReturnValue(null);
 
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useSearchParams: () => ({ get: mockGet }),
 }));
@@ -28,8 +28,8 @@ function makeWrapper(overrides: Partial<AuthContextValue> = {}) {
     tenant: null,
     isAuthenticated: false,
     isLoading: false,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     ...overrides,
   };
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -43,12 +43,12 @@ function renderLoginPage(overrides?: Partial<AuthContextValue>) {
   return render(<LoginPage />, { wrapper: makeWrapper(overrides) });
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => vi.clearAllMocks());
 
 // ─── AC-4: client-side validation ────────────────────────────────────────────
 describe('AC-4: client-side validation shows inline errors', () => {
   it('shows "E-mail é obrigatório" when email is empty', async () => {
-    const login = jest.fn();
+    const login = vi.fn();
     renderLoginPage({ login });
 
     await userEvent.click(screen.getByRole('button', { name: /entrar/i }));
@@ -58,7 +58,7 @@ describe('AC-4: client-side validation shows inline errors', () => {
   });
 
   it('shows "Formato de e-mail inválido" for bad email', async () => {
-    const login = jest.fn();
+    const login = vi.fn();
     renderLoginPage({ login });
 
     await userEvent.type(screen.getByLabelText(/e-mail/i), 'notanemail');
@@ -72,7 +72,7 @@ describe('AC-4: client-side validation shows inline errors', () => {
   });
 
   it('shows "Senha é obrigatória" when password is empty', async () => {
-    const login = jest.fn();
+    const login = vi.fn();
     renderLoginPage({ login });
 
     await userEvent.type(screen.getByLabelText(/e-mail/i), 'user@example.com');
@@ -83,7 +83,7 @@ describe('AC-4: client-side validation shows inline errors', () => {
   });
 
   it('shows "A senha deve ter pelo menos 8 caracteres" for short password', async () => {
-    const login = jest.fn();
+    const login = vi.fn();
     renderLoginPage({ login });
 
     await userEvent.type(screen.getByLabelText(/e-mail/i), 'user@example.com');
@@ -100,7 +100,7 @@ describe('AC-4: client-side validation shows inline errors', () => {
 // ─── AC-1: successful login redirects to /dashboard ─────────────────────────
 describe('AC-1: successful login', () => {
   it('calls login() and redirects to /dashboard', async () => {
-    const login = jest.fn().mockResolvedValue(undefined);
+    const login = vi.fn().mockResolvedValue(undefined);
     mockGet.mockReturnValue(null);
     renderLoginPage({ login });
 
@@ -118,7 +118,7 @@ describe('AC-1: successful login', () => {
 // ─── AC-3: returnTo redirect ─────────────────────────────────────────────────
 describe('AC-3: returnTo redirect', () => {
   it('redirects to returnTo param after login', async () => {
-    const login = jest.fn().mockResolvedValue(undefined);
+    const login = vi.fn().mockResolvedValue(undefined);
     mockGet.mockImplementation((key: string) =>
       key === 'returnTo' ? '/settings' : null,
     );
@@ -132,7 +132,7 @@ describe('AC-3: returnTo redirect', () => {
   });
 
   it('falls back to /dashboard when returnTo is an absolute URL (open redirect guard)', async () => {
-    const login = jest.fn().mockResolvedValue(undefined);
+    const login = vi.fn().mockResolvedValue(undefined);
     mockGet.mockImplementation((key: string) =>
       key === 'returnTo' ? 'https://evil.com' : null,
     );
@@ -146,7 +146,7 @@ describe('AC-3: returnTo redirect', () => {
   });
 
   it('falls back to /dashboard when returnTo starts with // (protocol-relative redirect)', async () => {
-    const login = jest.fn().mockResolvedValue(undefined);
+    const login = vi.fn().mockResolvedValue(undefined);
     mockGet.mockImplementation((key: string) =>
       key === 'returnTo' ? '//evil.com' : null,
     );
@@ -171,7 +171,7 @@ describe('Task 6: redirect authenticated users away from login', () => {
 // ─── AC-2: API failure shows error message ───────────────────────────────────
 describe('AC-2: API failure shows error alert', () => {
   it('shows error alert when login throws', async () => {
-    const login = jest
+    const login = vi
       .fn()
       .mockRejectedValue(new Error('E-mail ou senha inválidos'));
     renderLoginPage({ login });

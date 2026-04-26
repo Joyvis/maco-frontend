@@ -1,19 +1,18 @@
-/**
- * @jest-environment node
- */
+// @vitest-environment node
+
 import { POST } from '../route';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://api.test',
     NEXT_PUBLIC_APP_NAME: 'maco-test',
   },
 }));
 
-const cookieGet = jest.fn();
-const cookieSet = jest.fn();
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(async () => ({ get: cookieGet, set: cookieSet })),
+const cookieGet = vi.fn();
+const cookieSet = vi.fn();
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => ({ get: cookieGet, set: cookieSet })),
 }));
 
 const TOKENS = {
@@ -31,7 +30,7 @@ function jsonResponse(body: unknown, status: number) {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('POST /api/auth/refresh', () => {
@@ -42,7 +41,7 @@ describe('POST /api/auth/refresh', () => {
 
   it('returns 401 when refresh_token cookie is missing', async () => {
     cookieGet.mockReturnValueOnce(undefined);
-    globalThis.fetch = jest.fn() as unknown as typeof fetch;
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
 
     const res = await POST();
     expect(res.status).toBe(401);
@@ -52,7 +51,7 @@ describe('POST /api/auth/refresh', () => {
 
   it('returns 401 when backend rejects the refresh token', async () => {
     cookieGet.mockReturnValueOnce({ value: 'r1' });
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({}, 401)) as unknown as typeof fetch;
 
@@ -64,7 +63,7 @@ describe('POST /api/auth/refresh', () => {
 
   it('happy path: rotates both cookies and returns new access_token', async () => {
     cookieGet.mockReturnValueOnce({ value: 'r1' });
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         jsonResponse(TOKENS, 200),

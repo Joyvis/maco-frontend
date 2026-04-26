@@ -1,27 +1,26 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
+import type { MockedFunction } from 'vitest';
 
 import { AuthProvider, useAuthContext } from '@/providers/auth-provider';
 import { configureAuth } from '@/services/api-client';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000',
     NEXT_PUBLIC_APP_NAME: 'Maco',
   },
 }));
 
-jest.mock('@/services/api-client', () => ({
-  configureAuth: jest.fn(),
-  resetAuth: jest.fn(),
+vi.mock('@/services/api-client', () => ({
+  configureAuth: vi.fn(),
+  resetAuth: vi.fn(),
 }));
 
-const mockConfigureAuth = configureAuth as jest.MockedFunction<
-  typeof configureAuth
->;
+const mockConfigureAuth = configureAuth as MockedFunction<typeof configureAuth>;
 
-const mockPush = jest.fn();
-jest.mock('next/navigation', () => ({
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
@@ -73,18 +72,31 @@ function fetchFail(status = 401) {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.useFakeTimers();
+  vi.clearAllMocks();
+  // Vitest 4 fakes queueMicrotask by default, which breaks RTL's waitFor;
+  // shouldAdvanceTime keeps the clock ticking automatically so waitFor's
+  // polling-based assertions still resolve. Manual advanceTimersByTime() in
+  // the AC-8 background-refresh tests below still works.
+  vi.useFakeTimers({
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'Date',
+    ],
+    shouldAdvanceTime: true,
+  });
 });
 
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
 });
 
 // ─── AC-11: useAuth returns correct initial state ────────────────────────────
 describe('AC-11: isLoading state during session init', () => {
   it('starts as loading and resolves to unauthenticated when no session', async () => {
-    global.fetch = jest.fn().mockResolvedValue(fetchFail(401));
+    global.fetch = vi.fn().mockResolvedValue(fetchFail(401));
 
     render(
       <AuthProvider>
@@ -103,7 +115,7 @@ describe('AC-11: isLoading state during session init', () => {
   });
 
   it('hydrates user state from existing cookie session on mount', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -130,7 +142,7 @@ describe('AC-11: isLoading state during session init', () => {
 describe('AC-1: login() updates auth state', () => {
   it('sets user and token after successful login', async () => {
     // Mount: no session
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
       .mockResolvedValueOnce(
@@ -163,7 +175,7 @@ describe('AC-1: login() updates auth state', () => {
 // ─── AC-2: login() with invalid credentials throws ──────────────────────────
 describe('AC-2: login() throws on invalid credentials', () => {
   it('throws Error with backend message on 401', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh
       .mockResolvedValueOnce(fetchFail(401)); // login
@@ -205,7 +217,7 @@ describe('AC-2: login() throws on invalid credentials', () => {
 // ─── AC-13: logout() resets state and redirects ─────────────────────────────
 describe('AC-13: logout() resets context and redirects to /login', () => {
   it('clears user, calls logout endpoint, redirects to /login', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -238,7 +250,7 @@ describe('AC-13: logout() resets context and redirects to /login', () => {
 // ─── AC-8: background refresh scheduled at 80% TTL ──────────────────────────
 describe('AC-8: background refresh fires at 80% of TTL', () => {
   it('calls /api/auth/refresh when timer fires', async () => {
-    const fetchMock = jest
+    const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -262,7 +274,7 @@ describe('AC-8: background refresh fires at 80% of TTL', () => {
 
     // Advance timer by 80% of 900s = 720s
     await act(async () => {
-      jest.advanceTimersByTime(720_000);
+      vi.advanceTimersByTime(720_000);
     });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
@@ -274,7 +286,7 @@ describe('AC-8: background refresh fires at 80% of TTL', () => {
 // ─── AC-9: refresh failure clears session and redirects ─────────────────────
 describe('AC-9: refresh failure → logout → redirect /login', () => {
   it('redirects to /login when background refresh fails', async () => {
-    const fetchMock = jest
+    const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -296,7 +308,7 @@ describe('AC-9: refresh failure → logout → redirect /login', () => {
     );
 
     await act(async () => {
-      jest.advanceTimersByTime(720_000);
+      vi.advanceTimersByTime(720_000);
     });
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
@@ -306,7 +318,7 @@ describe('AC-9: refresh failure → logout → redirect /login', () => {
 // ─── catch block in scheduleRefresh (network error) ─────────────────────────
 describe('scheduleRefresh catch: network error during background refresh', () => {
   it('calls logout and redirects to /login on fetch throw', async () => {
-    const fetchMock = jest
+    const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -328,7 +340,7 @@ describe('scheduleRefresh catch: network error during background refresh', () =>
     );
 
     await act(async () => {
-      jest.advanceTimersByTime(720_000);
+      vi.advanceTimersByTime(720_000);
     });
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
@@ -338,7 +350,7 @@ describe('scheduleRefresh catch: network error during background refresh', () =>
 // ─── configureAuth callbacks: onTokenRefreshed and onUnauthorized ────────────
 describe('configureAuth callbacks', () => {
   it('onTokenRefreshed updates access token when mounted', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -372,7 +384,7 @@ describe('configureAuth callbacks', () => {
   });
 
   it('onTokenRefreshed is a no-op when component is unmounted', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -404,7 +416,7 @@ describe('configureAuth callbacks', () => {
   });
 
   it('onUnauthorized triggers logout and redirect to /login', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -438,7 +450,7 @@ describe('configureAuth callbacks', () => {
 // ─── mount: /users/me failure after successful refresh ──────────────────────
 describe('mount session hydration: /users/me failure', () => {
   it('stays unauthenticated when /users/me returns non-ok after refresh', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -462,7 +474,7 @@ describe('mount session hydration: /users/me failure', () => {
 // ─── configureAuth setup error scenarios ────────────────────────────────────
 describe('configureAuth setup error scenarios', () => {
   it('resolves loading=false and stays unauthenticated when refresh fetch throws on mount', async () => {
-    global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network error')); // mount refresh throws
+    global.fetch = vi.fn().mockRejectedValueOnce(new Error('Network error')); // mount refresh throws
 
     render(
       <AuthProvider>
@@ -479,7 +491,7 @@ describe('configureAuth setup error scenarios', () => {
   });
 
   it('resolves loading=false and stays unauthenticated when /users/me fetch throws on mount', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         fetchOk({ access_token: 'tok-1', expires_in: 900 }),
@@ -506,14 +518,14 @@ describe('configureAuth setup error scenarios', () => {
       throw new Error('configureAuth setup failed');
     });
 
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
       .mockResolvedValueOnce(
         fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 }),
       ); // login
 
-    const errSpy = jest
+    const errSpy = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
 

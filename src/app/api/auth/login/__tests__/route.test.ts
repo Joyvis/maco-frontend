@@ -1,18 +1,17 @@
-/**
- * @jest-environment node
- */
+// @vitest-environment node
+
 import { POST } from '../route';
 
-jest.mock('@/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     NEXT_PUBLIC_API_URL: 'http://api.test',
     NEXT_PUBLIC_APP_NAME: 'maco-test',
   },
 }));
 
-const cookieSet = jest.fn();
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(async () => ({ set: cookieSet })),
+const cookieSet = vi.fn();
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => ({ set: cookieSet })),
 }));
 
 const TOKENS = {
@@ -46,7 +45,7 @@ function jsonResponse(body: unknown, status: number) {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('POST /api/auth/login', () => {
@@ -69,7 +68,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 401 when backend rejects credentials', async () => {
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(
         jsonResponse({ message: 'invalid' }, 401),
@@ -83,7 +82,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 400 when backend errors with non-401 status', async () => {
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({}, 500)) as unknown as typeof fetch;
 
@@ -95,7 +94,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 400 with fallback message when backend body is non-JSON', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValueOnce({
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: async () => {
@@ -111,7 +110,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 502 when /users/me fetch fails', async () => {
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(TOKENS, 200))
       .mockResolvedValueOnce(jsonResponse({}, 500)) as unknown as typeof fetch;
@@ -126,7 +125,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('happy path: sets both cookies and returns user + access_token', async () => {
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(TOKENS, 200))
       .mockResolvedValueOnce(
