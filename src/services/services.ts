@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
+import { usePaginatedQuery } from '@/hooks/use-paginated-query';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 
 // ─── Service type (stub — replace with generated schema type when available) ───
@@ -25,17 +26,15 @@ export const serviceKeys = {
 };
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────
-export function useServices(filters: ServiceFilters) {
-  const { data, ...rest } = useQuery({
-    queryKey: serviceKeys.list(filters),
-    queryFn: () => apiClient.get<PaginatedResponse<Service>>('/services', filters),
-  });
-
-  return {
-    data: data?.data,
-    meta: data?.meta,
-    ...rest,
-  };
+export function useServices(
+  filters: Omit<ServiceFilters, 'page' | 'page_size'> = {},
+  options?: { pageSize?: number; initialPage?: number }
+) {
+  return usePaginatedQuery<Service>(
+    (params) => serviceKeys.list({ ...filters, ...params }),
+    (params) => apiClient.get<PaginatedResponse<Service>>('/services', { ...filters, ...params }),
+    options
+  );
 }
 
 export function useService(id: string) {

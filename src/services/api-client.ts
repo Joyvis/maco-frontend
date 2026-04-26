@@ -1,3 +1,5 @@
+'use client';
+
 import { env } from '@/config/env';
 import type { ApiError } from '@/types/api';
 
@@ -10,11 +12,21 @@ export interface AuthConfig {
   onForbidden?: () => void;
 }
 
+const defaultOnUnauthorized = () => {
+  window.location.href = '/login';
+};
+
+const defaultOnForbidden = () => {
+  window.location.href = '/unauthorized';
+};
+
 let authConfig: AuthConfig = {
   getToken: () => null,
   getRefreshToken: () => null,
   getTenantId: () => null,
   onTokenRefreshed: () => undefined,
+  onUnauthorized: defaultOnUnauthorized,
+  onForbidden: defaultOnForbidden,
 };
 
 export function configureAuth(config: AuthConfig): void {
@@ -27,6 +39,8 @@ export function resetAuth(): void {
     getRefreshToken: () => null,
     getTenantId: () => null,
     onTokenRefreshed: () => undefined,
+    onUnauthorized: defaultOnUnauthorized,
+    onForbidden: defaultOnForbidden,
   };
 }
 

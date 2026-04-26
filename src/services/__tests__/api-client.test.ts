@@ -188,6 +188,17 @@ describe('AC-8: Calls onUnauthorized when refresh fails', () => {
     await expect(apiClient.get('/secure')).rejects.toThrow();
     expect(onUnauthorized).toHaveBeenCalled();
   });
+
+  it('redirects to /login by default when refresh fails and no onUnauthorized provided', async () => {
+    // resetAuth() in beforeEach sets the default redirect callback
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
+
+    await expect(apiClient.get('/secure')).rejects.toThrow();
+    expect(window.location.href).toBe('/login');
+  });
 });
 
 // ─── AC-9: Concurrent 401s → single refresh ───────────────────────────────────
@@ -235,6 +246,13 @@ describe('AC-10: 403 calls onForbidden callback', () => {
     global.fetch = mockFetchFail(403);
     await expect(apiClient.get('/admin')).rejects.toThrow();
     expect(onForbidden).toHaveBeenCalled();
+  });
+
+  it('redirects to /unauthorized by default when 403 and no onForbidden provided', async () => {
+    // resetAuth() in beforeEach sets the default redirect callback
+    global.fetch = mockFetchFail(403);
+    await expect(apiClient.get('/admin')).rejects.toThrow();
+    expect(window.location.href).toBe('/unauthorized');
   });
 });
 
