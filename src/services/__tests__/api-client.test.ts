@@ -358,6 +358,17 @@ describe('Fallback error for unhandled status codes', () => {
   });
 });
 
+// ─── 204 No Content ───────────────────────────────────────────────────────────
+describe('204 No Content returns undefined without parsing body', () => {
+  it('returns undefined on 204 DELETE without calling response.json()', async () => {
+    const jsonSpy = jest.fn();
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 204, json: jsonSpy });
+    const result = await apiClient.delete('/items/1');
+    expect(result).toBeUndefined();
+    expect(jsonSpy).not.toHaveBeenCalled();
+  });
+});
+
 // ─── Initial authConfig lambdas (before resetAuth is ever called) ─────────────
 describe('Initial authConfig lambdas', () => {
   it('getToken and getTenantId return null in the initial module state', async () => {

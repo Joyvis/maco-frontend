@@ -40,6 +40,7 @@ describe('AC-20: usePaginatedQuery returns data, meta, isLoading, page, setPage'
     expect(result.current.meta).toEqual(mockData.meta);
     expect(result.current.page).toBe(1);
     expect(typeof result.current.setPage).toBe('function');
+    expect(typeof result.current.isFetching).toBe('boolean');
   });
 
   it('fetches new page when setPage is called', async () => {
