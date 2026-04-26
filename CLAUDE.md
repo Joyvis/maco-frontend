@@ -70,3 +70,14 @@ Jobs run sequentially with `needs:` dependencies; any failure skips downstream j
 | `npm run build`        | Next.js production build    |
 
 See `CONTRIBUTING.md` for local workflow and branch protection recommendations.
+
+## Vercel Deployment (MACO-55)
+
+- **Config**: `vercel.json` at repo root — explicit Next.js framework, build, dev, install commands
+- **Production deploy**: Vercel GitHub integration auto-deploys on push to `main`
+- **Preview deploys**: every PR gets a unique preview URL posted as a PR comment (via Vercel bot)
+- **Env vars**: set per environment in the Vercel dashboard (Preview / Production):
+  - `NEXT_PUBLIC_API_URL` — backend API base URL (different per env)
+  - `NEXT_PUBLIC_APP_NAME` — `MACO`
+- **Domain**: configured in Vercel dashboard; SSL auto-provisioned
+- **Gotcha**: `src/config/env.ts` validates env vars at startup via Zod — Vercel build fails fast if vars are missing
