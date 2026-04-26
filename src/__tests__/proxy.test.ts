@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decodeToken, isTokenExpired } from '@/lib/auth/jwt';
 import type { JWTPayload } from '@/types/auth';
 
-import { middleware } from '../middleware';
+import { proxy } from '../proxy';
 
 jest.mock('@/lib/auth/jwt', () => ({
   decodeToken: jest.fn(),
@@ -40,7 +40,7 @@ describe('AC-6: public routes are accessible without authentication', () => {
     '/accept-invite',
   ])('%s passes through without redirect', async (path) => {
     const request = new NextRequest(`http://localhost${path}`);
-    const response = await middleware(request);
+    const response = await proxy(request);
     expect(response.status).not.toBe(307);
     expect(response.status).not.toBe(302);
   });
@@ -50,7 +50,7 @@ describe('AC-6: public routes are accessible without authentication', () => {
 describe('AC-5: unauthenticated requests to protected routes redirect to /login', () => {
   it('redirects to /login?returnTo=/dashboard when no access_token cookie', async () => {
     const request = new NextRequest('http://localhost/dashboard');
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(307);
     const location = new URL(response.headers.get('location')!);
@@ -60,7 +60,7 @@ describe('AC-5: unauthenticated requests to protected routes redirect to /login'
 
   it('preserves the requested pathname in returnTo', async () => {
     const request = new NextRequest('http://localhost/settings/profile');
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(307);
     const location = new URL(response.headers.get('location')!);
@@ -79,7 +79,7 @@ describe('AC-7: authenticated requests with valid token pass through', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=valid.jwt.token' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(nextSpy).toHaveBeenCalledWith(
@@ -99,11 +99,11 @@ describe('AC-7: authenticated requests with valid token pass through', () => {
 
 // ─── AC-5 (refresh paths): expired/missing access token + refresh token ──────
 //
-// These cover lines 28-39 and 50-66 of middleware.ts — the silent-refresh
+// These cover lines 28-39 and 50-66 of proxy.ts — the silent-refresh
 // branches the unit tests above don't exercise. fetch() is mocked to return a
 // Response-like object with getSetCookie() so the loop appending Set-Cookie
 // headers can be asserted on the forwarded response.
-describe('middleware refresh paths', () => {
+describe('proxy refresh paths', () => {
   const originalFetch = globalThis.fetch;
   afterEach(() => {
     globalThis.fetch = originalFetch;
@@ -135,7 +135,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'refresh_token=r1' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(response.headers.getSetCookie()).toEqual([
@@ -154,7 +154,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'refresh_token=r1' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(307);
     const location = new URL(response.headers.get('location')!);
@@ -170,7 +170,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=expired; refresh_token=r1' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(response.headers.getSetCookie()).toEqual([
@@ -185,7 +185,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=garbage; refresh_token=r1' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(response.headers.getSetCookie()).toEqual([
@@ -201,7 +201,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/settings', {
       headers: { cookie: 'access_token=expired; refresh_token=r1' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(307);
     const location = new URL(response.headers.get('location')!);
@@ -217,7 +217,7 @@ describe('middleware refresh paths', () => {
     const request = new NextRequest('http://localhost/dashboard', {
       headers: { cookie: 'access_token=expired' },
     });
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(307);
     expect(globalThis.fetch).not.toHaveBeenCalled();
