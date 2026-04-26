@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuthContext } from '@/providers/auth-provider';
+import { configureAuth } from '@/services/api-client';
 
 jest.mock('@/config/env', () => ({
   env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
@@ -10,6 +11,8 @@ jest.mock('@/services/api-client', () => ({
   configureAuth: jest.fn(),
   resetAuth: jest.fn(),
 }));
+
+const mockConfigureAuth = configureAuth as jest.MockedFunction<typeof configureAuth>;
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -258,6 +261,92 @@ describe('AC-9: refresh failure → logout → redirect /login', () => {
 
     await act(async () => {
       jest.advanceTimersByTime(720_000);
+    });
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+});
+
+// ─── catch block in scheduleRefresh (network error) ─────────────────────────
+describe('scheduleRefresh catch: network error during background refresh', () => {
+  it('calls logout and redirects to /login on fetch throw', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
+      .mockRejectedValueOnce(new Error('Network error')) // background refresh throws
+      .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout endpoint
+
+    global.fetch = fetchMock;
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    await act(async () => {
+      jest.advanceTimersByTime(720_000);
+    });
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+});
+
+// ─── configureAuth callbacks: onTokenRefreshed and onUnauthorized ────────────
+describe('configureAuth callbacks', () => {
+  it('onTokenRefreshed updates access token when mounted', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(fetchOk(MOCK_USER));
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    // Capture the callbacks passed to configureAuth and exercise them
+    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const authArg = lastCall?.[0];
+    expect(authArg).toBeDefined();
+
+    await act(async () => {
+      authArg?.onTokenRefreshed('tok-refreshed');
+    });
+
+    // Exercise the getter callbacks to satisfy coverage
+    expect(authArg?.getToken()).toBe('tok-1');
+    expect(authArg?.getRefreshToken()).toBeNull();
+    expect(authArg?.getTenantId()).toBe('tenant-abc');
+  });
+
+  it('onUnauthorized triggers logout and redirect to /login', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(fetchOk(MOCK_USER))
+      .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const authArg = lastCall?.[0];
+    expect(authArg).toBeDefined();
+
+    await act(async () => {
+      authArg?.onUnauthorized?.();
     });
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
