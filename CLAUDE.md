@@ -3,7 +3,7 @@
 ## Stack
 
 - Next.js 16 (App Router), TypeScript 5 strict, Tailwind CSS 4, shadcn/ui (New York style)
-- React 19, Zod for runtime validation, Jest + ts-jest for unit tests
+- React 19, Zod for runtime validation, Jest + ts-jest for unit tests, Playwright for e2e
 - TanStack Query v5 (`@tanstack/react-query`) for server-state cache; Devtools auto-included in dev only
 
 ## Layout
@@ -21,6 +21,17 @@ src/
 └── types/            # Shared TypeScript types/interfaces
 ```
 
+```
+e2e/
+├── fixtures/         # Shared Playwright fixtures (authedPage etc.)
+├── auth/             # Auth-bounded e2e specs
+├── tenancy/          # Tenancy-bounded e2e specs
+├── global-setup.ts   # No-op stub; T2 replaces with admin bootstrap
+├── smoke.spec.ts     # Harness smoke test (/login renders)
+├── run-local.sh      # Full orchestrator: postgres + backend + frontend + teardown
+└── README.md         # E2E conventions and how-to
+```
+
 ## Commands
 
 ```bash
@@ -28,6 +39,9 @@ npm run dev      # Start dev server on http://localhost:3000
 npm run build    # Production build
 npm run lint     # ESLint
 npm test         # Jest unit tests
+npm run test:e2e:local   # Full Playwright e2e (Docker + ../maco-backend required)
+npm run test:e2e         # Playwright only (servers must already be up)
+npx playwright install --with-deps chromium  # first-time browser install
 ```
 
 ## Conventions
