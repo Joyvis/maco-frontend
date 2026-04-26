@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
+
 import { DataTable } from '../data-table';
 
 const mockReplace = jest.fn();
@@ -21,7 +22,10 @@ const columns: ColumnDef<Row>[] = [
   { accessorKey: 'name', header: 'Name' },
 ];
 
-const data: Row[] = Array.from({ length: 15 }, (_, i) => ({ id: i + 1, name: `Item ${i + 1}` }));
+const data: Row[] = Array.from({ length: 15 }, (_, i) => ({
+  id: i + 1,
+  name: `Item ${i + 1}`,
+}));
 
 describe('DataTable', () => {
   beforeEach(() => {
@@ -51,7 +55,14 @@ describe('DataTable', () => {
   });
 
   it('filters rows by search text', async () => {
-    render(<DataTable columns={columns} data={data} searchColumn="name" pageSize={20} />);
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchColumn="name"
+        pageSize={20}
+      />,
+    );
     const input = screen.getByPlaceholderText(/filtrar/i);
     await userEvent.type(input, 'Item 1');
     // matches Item 1, Item 10–15 = 7 rows; non-matching rows should be absent
@@ -71,8 +82,12 @@ describe('DataTable', () => {
     render(<DataTable columns={columns} data={data} pageSize={10} />);
     mockReplace.mockClear();
     await userEvent.click(screen.getByRole('button', { name: /next page/i }));
-    await userEvent.click(screen.getByRole('button', { name: /previous page/i }));
-    const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1]?.[0] as string;
+    await userEvent.click(
+      screen.getByRole('button', { name: /previous page/i }),
+    );
+    const lastCall = mockReplace.mock.calls[
+      mockReplace.mock.calls.length - 1
+    ]?.[0] as string;
     expect(lastCall).not.toMatch(/[?&]page=/);
   });
 
@@ -85,7 +100,9 @@ describe('DataTable', () => {
       render(<DataTable columns={columns} data={data} pageSize={10} />);
       mockReplace.mockClear();
       await userEvent.click(screen.getByRole('button', { name: /next page/i }));
-      const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1]?.[0] as string;
+      const lastCall = mockReplace.mock.calls[
+        mockReplace.mock.calls.length - 1
+      ]?.[0] as string;
       expect(lastCall).toContain('filter=active');
       expect(lastCall).toContain('page=1');
     } finally {

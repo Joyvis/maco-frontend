@@ -1,11 +1,15 @@
 import React from 'react';
 import { renderHook } from '@testing-library/react';
+
 import { AuthContext } from '@/providers/auth-provider';
 import { usePermission } from '@/hooks/use-permission';
 import type { AuthContextValue, User } from '@/types/auth';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_APP_NAME: 'Maco',
+  },
 }));
 
 const MOCK_USER: User = {
@@ -30,7 +34,9 @@ function makeWrapper(user: User | null, isLoading = false) {
     logout: jest.fn(),
   };
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
   };
 }
 

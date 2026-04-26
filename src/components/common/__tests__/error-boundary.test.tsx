@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import ErrorBoundary from '../error-boundary';
 
 describe('ErrorBoundary', () => {
@@ -13,7 +14,9 @@ describe('ErrorBoundary', () => {
   it('calls reset when Tentar Novamente is clicked', async () => {
     const reset = jest.fn();
     render(<ErrorBoundary error={new Error('Test error')} reset={reset} />);
-    await userEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /tentar novamente/i }),
+    );
     expect(reset).toHaveBeenCalledTimes(1);
   });
 });

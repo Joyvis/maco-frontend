@@ -8,10 +8,17 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true, noUncheckedIndexedAccess: true } }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      { tsconfig: { strict: true, noUncheckedIndexedAccess: true } },
+    ],
   },
   transformIgnorePatterns: ['/node_modules/(?!(jose)/)'],
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/components/ui/**', '!src/**/*.d.ts'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/components/ui/**',
+    '!src/**/*.d.ts',
+  ],
   coverageThreshold: {
     global: {
       branches: 80,

@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+
 import { env } from '@/config/env';
 import {
   COOKIE_ACCESS_TOKEN,
@@ -32,9 +33,13 @@ export async function POST() {
   cookieStore.set(
     COOKIE_ACCESS_TOKEN,
     tokens.access_token,
-    accessTokenCookieOptions(tokens.expires_in)
+    accessTokenCookieOptions(tokens.expires_in),
   );
-  cookieStore.set(COOKIE_REFRESH_TOKEN, tokens.refresh_token, refreshTokenCookieOptions());
+  cookieStore.set(
+    COOKIE_REFRESH_TOKEN,
+    tokens.refresh_token,
+    refreshTokenCookieOptions(),
+  );
 
   return NextResponse.json({
     access_token: tokens.access_token,

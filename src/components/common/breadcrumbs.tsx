@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
+
 import { SEGMENT_LABELS } from '@/config/navigation';
 
 export function Breadcrumbs() {
@@ -12,7 +13,10 @@ export function Breadcrumbs() {
   if (segments.length === 0) return null;
 
   return (
-    <nav aria-label="breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground">
+    <nav
+      aria-label="breadcrumb"
+      className="text-muted-foreground flex items-center gap-1 text-sm"
+    >
       {segments.map((segment, index) => {
         const isLast = index === segments.length - 1;
         const href = '/' + segments.slice(0, index + 1).join('/');
@@ -22,9 +26,12 @@ export function Breadcrumbs() {
           <span key={href} className="flex items-center gap-1">
             {index > 0 && <ChevronRight className="size-3.5 shrink-0" />}
             {isLast ? (
-              <span className="font-medium text-foreground">{label}</span>
+              <span className="text-foreground font-medium">{label}</span>
             ) : (
-              <Link href={href} className="hover:text-foreground transition-colors">
+              <Link
+                href={href}
+                className="hover:text-foreground transition-colors"
+              >
                 {label}
               </Link>
             )}

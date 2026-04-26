@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Package } from 'lucide-react';
+
 import { EmptyState } from '../empty-state';
 
 describe('EmptyState', () => {
@@ -11,7 +12,9 @@ describe('EmptyState', () => {
   });
 
   it('renders icon when provided', () => {
-    render(<EmptyState title="No items" description="Nothing" icon={Package} />);
+    render(
+      <EmptyState title="No items" description="Nothing" icon={Package} />,
+    );
     const icon = document.querySelector('svg');
     expect(icon).toBeInTheDocument();
   });
@@ -23,9 +26,11 @@ describe('EmptyState', () => {
         description="Nothing"
         actionLabel="Add item"
         onAction={jest.fn()}
-      />
+      />,
     );
-    expect(screen.getByRole('button', { name: 'Add item' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Add item' }),
+    ).toBeInTheDocument();
   });
 
   it('calls onAction when CTA button is clicked', async () => {
@@ -36,7 +41,7 @@ describe('EmptyState', () => {
         description="Nothing"
         actionLabel="Add item"
         onAction={onAction}
-      />
+      />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Add item' }));
     expect(onAction).toHaveBeenCalledTimes(1);

@@ -1,4 +1,5 @@
 import { decodeJwt } from 'jose';
+
 import type { JWTPayload } from '@/types/auth';
 
 export function decodeToken(token: string): JWTPayload | null {

@@ -4,7 +4,10 @@
 import { POST } from '../route';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://api.test', NEXT_PUBLIC_APP_NAME: 'maco-test' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://api.test',
+    NEXT_PUBLIC_APP_NAME: 'maco-test',
+  },
 }));
 
 const cookieSet = jest.fn();
@@ -55,7 +58,9 @@ describe('POST /api/auth/login', () => {
   it('returns 400 when email missing', async () => {
     const res = await POST(jsonRequest({ password: 'p' }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ message: 'E-mail e senha são obrigatórios' });
+    expect(await res.json()).toEqual({
+      message: 'E-mail e senha são obrigatórios',
+    });
   });
 
   it('returns 400 when password missing', async () => {
@@ -66,9 +71,13 @@ describe('POST /api/auth/login', () => {
   it('returns 401 when backend rejects credentials', async () => {
     globalThis.fetch = jest
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ message: 'invalid' }, 401)) as unknown as typeof fetch;
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'invalid' }, 401),
+      ) as unknown as typeof fetch;
 
-    const res = await POST(jsonRequest({ email: 'u@example.com', password: 'wrong' }));
+    const res = await POST(
+      jsonRequest({ email: 'u@example.com', password: 'wrong' }),
+    );
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ message: 'invalid' });
   });
@@ -78,7 +87,9 @@ describe('POST /api/auth/login', () => {
       .fn()
       .mockResolvedValueOnce(jsonResponse({}, 500)) as unknown as typeof fetch;
 
-    const res = await POST(jsonRequest({ email: 'u@example.com', password: 'p' }));
+    const res = await POST(
+      jsonRequest({ email: 'u@example.com', password: 'p' }),
+    );
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ message: 'E-mail ou senha inválidos' });
   });
@@ -92,7 +103,9 @@ describe('POST /api/auth/login', () => {
       },
     } as unknown as Response) as unknown as typeof fetch;
 
-    const res = await POST(jsonRequest({ email: 'u@example.com', password: 'p' }));
+    const res = await POST(
+      jsonRequest({ email: 'u@example.com', password: 'p' }),
+    );
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ message: 'E-mail ou senha inválidos' });
   });
@@ -103,18 +116,26 @@ describe('POST /api/auth/login', () => {
       .mockResolvedValueOnce(jsonResponse(TOKENS, 200))
       .mockResolvedValueOnce(jsonResponse({}, 500)) as unknown as typeof fetch;
 
-    const res = await POST(jsonRequest({ email: 'u@example.com', password: 'p' }));
+    const res = await POST(
+      jsonRequest({ email: 'u@example.com', password: 'p' }),
+    );
     expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ message: 'Falha ao carregar dados do usuário' });
+    expect(await res.json()).toEqual({
+      message: 'Falha ao carregar dados do usuário',
+    });
   });
 
   it('happy path: sets both cookies and returns user + access_token', async () => {
     globalThis.fetch = jest
       .fn()
       .mockResolvedValueOnce(jsonResponse(TOKENS, 200))
-      .mockResolvedValueOnce(jsonResponse(USER, 200)) as unknown as typeof fetch;
+      .mockResolvedValueOnce(
+        jsonResponse(USER, 200),
+      ) as unknown as typeof fetch;
 
-    const res = await POST(jsonRequest({ email: 'u@example.com', password: 'p' }));
+    const res = await POST(
+      jsonRequest({ email: 'u@example.com', password: 'p' }),
+    );
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -126,12 +147,17 @@ describe('POST /api/auth/login', () => {
     expect(cookieSet).toHaveBeenCalledWith(
       'access_token',
       'AT',
-      expect.objectContaining({ httpOnly: true, sameSite: 'lax', maxAge: 900, path: '/' })
+      expect.objectContaining({
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 900,
+        path: '/',
+      }),
     );
     expect(cookieSet).toHaveBeenCalledWith(
       'refresh_token',
       'RT',
-      expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/' })
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/' }),
     );
   });
 });

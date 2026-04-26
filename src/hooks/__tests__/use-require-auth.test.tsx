@@ -1,11 +1,15 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
+
 import { AuthContext } from '@/providers/auth-provider';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import type { AuthContextValue } from '@/types/auth';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_APP_NAME: 'Maco',
+  },
 }));
 
 const mockPush = jest.fn();
@@ -33,7 +37,9 @@ function makeWrapper(isAuthenticated: boolean, isLoading: boolean) {
     logout: jest.fn(),
   };
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
   };
 }
 

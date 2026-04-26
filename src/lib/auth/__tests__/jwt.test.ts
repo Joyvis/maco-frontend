@@ -5,7 +5,9 @@ jest.mock('jose', () => ({
     if (parts.length !== 3) throw new Error('Invalid JWT');
     const payload = parts[1];
     if (!payload) throw new Error('Invalid JWT');
-    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as unknown;
+    return JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf8'),
+    ) as unknown;
   },
 }));
 
@@ -14,7 +16,9 @@ import type { JWTPayload } from '@/types/auth';
 
 // Build a minimal JWT (header.payload.sig) with a real base64url payload
 function makeToken(payload: Partial<JWTPayload>): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const header = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   return `${header}.${body}.fakesig`;
 }

@@ -4,7 +4,10 @@ const BASE_URL = 'http://localhost:8000';
 
 // Mock env module
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_APP_NAME: 'Maco',
+  },
 }));
 
 // Capture window.location changes
@@ -43,7 +46,7 @@ describe('AC-1: GET request URL and response type', () => {
     const result = await apiClient.get<{ id: string }>('/path');
     expect(fetch).toHaveBeenCalledWith(
       `${BASE_URL}/path`,
-      expect.objectContaining({ method: 'GET' })
+      expect.objectContaining({ method: 'GET' }),
     );
     expect(result).toEqual({ data: { id: '1' } });
   });
@@ -59,8 +62,10 @@ describe('AC-2: POST with JSON body and Content-Type', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ name: 'test' }),
-        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
-      })
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      }),
     );
   });
 });
@@ -81,7 +86,7 @@ describe('AC-3: HTTP methods map correctly', () => {
     }
     expect(fetch).toHaveBeenCalledWith(
       `${BASE_URL}/x`,
-      expect.objectContaining({ method: httpMethod })
+      expect.objectContaining({ method: httpMethod }),
     );
   });
 });
@@ -100,8 +105,10 @@ describe('AC-4: Authorization header when authenticated', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer my-jwt-token' }),
-      })
+        headers: expect.objectContaining({
+          Authorization: 'Bearer my-jwt-token',
+        }),
+      }),
     );
   });
 });
@@ -121,7 +128,7 @@ describe('AC-5: X-Tenant-Id header from auth context', () => {
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({ 'X-Tenant-Id': 'tenant-123' }),
-      })
+      }),
     );
   });
 });
@@ -131,7 +138,10 @@ describe('AC-6: No Authorization header when unauthenticated', () => {
   it('omits Authorization header when no token', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.get('/public');
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBeUndefined();
   });
@@ -155,12 +165,18 @@ describe('Token refresh hits the Next.js route handler, not the backend directly
         status: 200,
         json: async () => ({ access_token: 'new-token' }),
       })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: 'ok' }),
+      });
 
     await apiClient.get('/secure');
 
     const calls = (fetch as jest.Mock).mock.calls as [string, unknown][];
-    const refreshCall = calls.find(([url]) => (url as string).includes('auth/refresh'));
+    const refreshCall = calls.find(([url]) =>
+      (url as string).includes('auth/refresh'),
+    );
     expect(refreshCall).toBeDefined();
     // Must use the relative Next.js route — not the external API base URL
     expect(refreshCall?.[0]).toBe('/api/auth/refresh');
@@ -190,7 +206,11 @@ describe('AC-7: 401 triggers token refresh and retries request', () => {
         json: async () => ({ access_token: 'new-token' }),
       })
       // Retry original → success
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'retried' }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: 'retried' }),
+      });
 
     const result = await apiClient.get('/secure');
     expect(onTokenRefreshed).toHaveBeenCalledWith('new-token');
@@ -214,7 +234,11 @@ describe('AC-8: Calls onUnauthorized when refresh fails', () => {
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
-      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({}),
+      });
 
     await expect(apiClient.get('/secure')).rejects.toThrow();
     expect(onUnauthorized).toHaveBeenCalled();
@@ -225,7 +249,11 @@ describe('AC-8: Calls onUnauthorized when refresh fails', () => {
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
-      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({}),
+      });
 
     await expect(apiClient.get('/secure')).rejects.toThrow();
     expect(window.location.href).toBe('/login');
@@ -253,12 +281,24 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
         });
       }
       if (refreshCount === 0) {
-        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          json: async () => ({}),
+        });
       }
-      return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: 'ok' }),
+      });
     });
 
-    await Promise.all([apiClient.get('/a'), apiClient.get('/b'), apiClient.get('/c')]);
+    await Promise.all([
+      apiClient.get('/a'),
+      apiClient.get('/b'),
+      apiClient.get('/c'),
+    ]);
     expect(refreshCount).toBe(1);
   });
 
@@ -274,12 +314,24 @@ describe('AC-9: Concurrent 401s trigger only one refresh', () => {
 
     global.fetch = jest.fn().mockImplementation((url: string) => {
       if (url.includes('/auth/refresh')) {
-        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          json: async () => ({}),
+        });
       }
-      return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        json: async () => ({}),
+      });
     });
 
-    await Promise.allSettled([apiClient.get('/a'), apiClient.get('/b'), apiClient.get('/c')]);
+    await Promise.allSettled([
+      apiClient.get('/a'),
+      apiClient.get('/b'),
+      apiClient.get('/c'),
+    ]);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 });
@@ -311,7 +363,10 @@ describe('AC-10: 403 calls onForbidden callback', () => {
 // ─── AC-11: 422 → ApiError with validation errors ────────────────────────────
 describe('AC-11: 422 throws ApiError with parsed validation errors', () => {
   it('throws ApiError with message and errors on 422', async () => {
-    const body = { message: 'Validation failed', errors: { name: ['is required'] } };
+    const body = {
+      message: 'Validation failed',
+      errors: { name: ['is required'] },
+    };
     global.fetch = mockFetchFail(422, body);
     await expect(apiClient.post('/items', {})).rejects.toMatchObject({
       message: 'Validation failed',
@@ -324,16 +379,20 @@ describe('AC-11: 422 throws ApiError with parsed validation errors', () => {
 describe('AC-12: 5xx throws generic error', () => {
   it('throws with "Something went wrong" message on 500', async () => {
     global.fetch = mockFetchFail(500);
-    await expect(apiClient.get('/boom')).rejects.toThrow('Something went wrong. Please try again.');
+    await expect(apiClient.get('/boom')).rejects.toThrow(
+      'Something went wrong. Please try again.',
+    );
   });
 });
 
 // ─── AC-13: Network error ─────────────────────────────────────────────────────
 describe('AC-13: Network error throws typed error', () => {
   it('throws with "Network error" message on fetch failure', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    global.fetch = jest
+      .fn()
+      .mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(apiClient.get('/offline')).rejects.toThrow(
-      'Network error. Check your connection.'
+      'Network error. Check your connection.',
     );
   });
 });
@@ -362,7 +421,10 @@ describe('Content-Type header', () => {
   it('omits Content-Type on bodyless GET requests', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.get('/items');
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     const headers = init.headers as Record<string, string>;
     expect(headers['Content-Type']).toBeUndefined();
   });
@@ -370,7 +432,10 @@ describe('Content-Type header', () => {
   it('includes Content-Type on POST with body', async () => {
     global.fetch = mockFetchOk({});
     await apiClient.post('/items', { name: 'test' });
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     const headers = init.headers as Record<string, string>;
     expect(headers['Content-Type']).toBe('application/json');
   });
@@ -385,7 +450,9 @@ describe('Fallback error for unhandled status codes', () => {
 
   it('throws default message when body has no message', async () => {
     global.fetch = mockFetchFail(404, {});
-    await expect(apiClient.get('/missing')).rejects.toThrow('An unexpected error occurred.');
+    await expect(apiClient.get('/missing')).rejects.toThrow(
+      'An unexpected error occurred.',
+    );
   });
 });
 
@@ -393,7 +460,9 @@ describe('Fallback error for unhandled status codes', () => {
 describe('204 No Content returns undefined without parsing body', () => {
   it('returns undefined on 204 DELETE without calling response.json()', async () => {
     const jsonSpy = jest.fn();
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 204, json: jsonSpy });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 204, json: jsonSpy });
     const result = await apiClient.delete('/items/1');
     expect(result).toBeUndefined();
     expect(jsonSpy).not.toHaveBeenCalled();
@@ -405,19 +474,28 @@ describe('Initial authConfig lambdas', () => {
   it('getToken and getTenantId return null in the initial module state', async () => {
     // Use an isolated module instance so resetAuth() from beforeEach has not run yet,
     // ensuring the module-initialization lambdas (lines 14, 16) are exercised.
-    let fresh!: typeof import('@/services/api-client');
+    type ApiClientModule = typeof import('@/services/api-client');
+    let fresh!: ApiClientModule;
     jest.isolateModules(() => {
       jest.mock('@/config/env', () => ({
-        env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+        env: {
+          NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+          NEXT_PUBLIC_APP_NAME: 'Maco',
+        },
       }));
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      fresh = require('@/services/api-client') as typeof import('@/services/api-client');
+      fresh = require('@/services/api-client') as ApiClientModule;
     });
 
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await fresh.apiClient.get('/test');
 
-    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBeUndefined();
     expect(headers['X-Tenant-Id']).toBeUndefined();
@@ -443,14 +521,20 @@ describe('resetAuth clears isRefreshing and refreshQueue', () => {
         status: 200,
         json: async () => ({ access_token: 'new-token' }),
       })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: 'ok' }),
+      });
 
     await apiClient.get('/a');
 
     // resetAuth clears state; a new request should not inherit stale isRefreshing
     resetAuth();
 
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await apiClient.get('/b');
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -470,7 +554,11 @@ describe('resetAuth default lambdas (getRefreshToken and onTokenRefreshed)', () 
         status: 200,
         json: async () => ({ access_token: 'new-token' }),
       })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: 'ok' }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: 'ok' }),
+      });
 
     const result = await apiClient.get('/secure');
     expect(result).toEqual({ data: 'ok' });

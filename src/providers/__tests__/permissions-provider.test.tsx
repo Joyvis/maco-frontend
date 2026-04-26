@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { PermissionsProvider, usePermissions } from '../permissions-provider';
+
 import type { Permission } from '@/types/permissions';
+
+import { PermissionsProvider, usePermissions } from '../permissions-provider';
 
 function TestConsumer({ permission }: { permission: Permission }) {
   const { hasPermission } = usePermissions();
@@ -12,7 +14,7 @@ describe('PermissionsProvider', () => {
     render(
       <PermissionsProvider permissions={['dashboard:read']}>
         <TestConsumer permission="dashboard:read" />
-      </PermissionsProvider>
+      </PermissionsProvider>,
     );
     expect(screen.getByText('allowed')).toBeInTheDocument();
   });
@@ -21,14 +23,18 @@ describe('PermissionsProvider', () => {
     render(
       <PermissionsProvider permissions={['dashboard:read']}>
         <TestConsumer permission="team:manage" />
-      </PermissionsProvider>
+      </PermissionsProvider>,
     );
     expect(screen.getByText('denied')).toBeInTheDocument();
   });
 
   it('throws when usePermissions is used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    expect(() => render(<TestConsumer permission="dashboard:read" />)).toThrow();
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    expect(() =>
+      render(<TestConsumer permission="dashboard:read" />),
+    ).toThrow();
     consoleError.mockRestore();
   });
 });

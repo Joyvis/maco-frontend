@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { Permission } from '@/types/permissions';
 import { MOCK_PERMISSIONS } from '@/config/mock-permissions';
 
@@ -20,7 +21,8 @@ export function PermissionsProvider({
   children,
   permissions = MOCK_PERMISSIONS,
 }: PermissionsProviderProps) {
-  const hasPermission = (permission: Permission) => permissions.includes(permission);
+  const hasPermission = (permission: Permission) =>
+    permissions.includes(permission);
   return (
     <PermissionsContext.Provider value={{ permissions, hasPermission }}>
       {children}
@@ -30,6 +32,7 @@ export function PermissionsProvider({
 
 export function usePermissions(): PermissionsContextValue {
   const ctx = useContext(PermissionsContext);
-  if (!ctx) throw new Error('usePermissions must be used within PermissionsProvider');
+  if (!ctx)
+    throw new Error('usePermissions must be used within PermissionsProvider');
   return ctx;
 }

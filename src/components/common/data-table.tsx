@@ -15,6 +15,7 @@ import {
   type PaginationState,
 } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -123,11 +124,18 @@ export function DataTable<TData>({
                   return (
                     <TableHead
                       key={header.id}
-                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                      onClick={
+                        canSort
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
                       className={canSort ? 'cursor-pointer select-none' : ''}
                     >
                       <span className="flex items-center gap-1">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                         {canSort && (
                           <span className="shrink-0">
                             {sorted === 'asc' ? (
@@ -152,7 +160,10 @@ export function DataTable<TData>({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -161,7 +172,7 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-8 text-muted-foreground"
+                  className="text-muted-foreground py-8 text-center"
                 >
                   Nenhum resultado encontrado.
                 </TableCell>
@@ -171,7 +182,7 @@ export function DataTable<TData>({
         </Table>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>Linhas por página:</span>
           <Select
             value={String(table.getState().pagination.pageSize)}
@@ -190,8 +201,9 @@ export function DataTable<TData>({
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+          <span className="text-muted-foreground text-sm">
+            Página {table.getState().pagination.pageIndex + 1} de{' '}
+            {table.getPageCount()}
           </span>
           <Button
             variant="outline"

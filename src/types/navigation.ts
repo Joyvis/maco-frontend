@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+
 import type { Permission } from './permissions';
 
 export interface NavItem {

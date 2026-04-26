@@ -1,7 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Sidebar } from '../sidebar';
+import { usePathname } from 'next/navigation';
+
+import { usePermissions } from '@/providers/permissions-provider';
 import type { Permission } from '@/types/permissions';
+
+import { Sidebar } from '../sidebar';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn().mockReturnValue('/dashboard'),
@@ -17,17 +21,21 @@ jest.mock('@/providers/permissions-provider', () => ({
 jest.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
   Tooltip: ({ children }: { children: React.ReactNode }) => children,
-  TooltipTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => children,
+  TooltipTrigger: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+  }) => children,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="tooltip-content">{children}</span>
   ),
 }));
 
-import { usePathname } from 'next/navigation';
-import { usePermissions } from '@/providers/permissions-provider';
-
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
-const mockUsePermissions = usePermissions as jest.MockedFunction<typeof usePermissions>;
+const mockUsePermissions = usePermissions as jest.MockedFunction<
+  typeof usePermissions
+>;
 
 function allPermissions() {
   return {
@@ -43,7 +51,9 @@ function withoutPermission(denied: Permission) {
   };
 }
 
-function renderSidebar(props: { mobileOpen?: boolean; onMobileClose?: () => void } = {}) {
+function renderSidebar(
+  props: { mobileOpen?: boolean; onMobileClose?: () => void } = {},
+) {
   return render(<Sidebar {...props} />);
 }
 
@@ -68,7 +78,9 @@ describe('Sidebar', () => {
     const toggle = screen.getByRole('button', { name: /collapse sidebar/i });
     await userEvent.click(toggle);
     expect(localStorage.getItem('maco-sidebar-state')).toBe('collapsed');
-    expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /expand sidebar/i }),
+    ).toBeInTheDocument();
   });
 
   it('expands sidebar on toggle click when collapsed and updates localStorage', async () => {
@@ -77,7 +89,9 @@ describe('Sidebar', () => {
     const toggle = screen.getByRole('button', { name: /expand sidebar/i });
     await userEvent.click(toggle);
     expect(localStorage.getItem('maco-sidebar-state')).toBe('expanded');
-    expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /collapse sidebar/i }),
+    ).toBeInTheDocument();
   });
 
   it('renders mobile drawer when mobileOpen is true', () => {

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { ConfirmDialog } from '../confirm-dialog';
 
 describe('ConfirmDialog', () => {
@@ -10,7 +11,7 @@ describe('ConfirmDialog', () => {
         description="Are you sure?"
         onConfirm={jest.fn()}
         trigger={<button>Delete</button>}
-      />
+      />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(screen.getByText('Delete item')).toBeInTheDocument();
@@ -25,7 +26,7 @@ describe('ConfirmDialog', () => {
         description="Are you sure?"
         onConfirm={onConfirm}
         trigger={<button>Delete</button>}
-      />
+      />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
@@ -40,7 +41,7 @@ describe('ConfirmDialog', () => {
         confirmLabel="Excluir"
         onConfirm={jest.fn()}
         trigger={<button>Delete</button>}
-      />
+      />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(screen.getByRole('button', { name: 'Excluir' })).toBeInTheDocument();
@@ -52,7 +53,7 @@ describe('ConfirmDialog', () => {
       () =>
         new Promise<void>((r) => {
           resolve = r;
-        })
+        }),
     );
     render(
       <ConfirmDialog
@@ -60,7 +61,7 @@ describe('ConfirmDialog', () => {
         description="Are you sure?"
         onConfirm={onConfirm}
         trigger={<button>Delete</button>}
-      />
+      />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));

@@ -1,10 +1,14 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
+
 import { AuthProvider, useAuthContext } from '@/providers/auth-provider';
 import { configureAuth } from '@/services/api-client';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_APP_NAME: 'Maco',
+  },
 }));
 
 jest.mock('@/services/api-client', () => ({
@@ -12,7 +16,9 @@ jest.mock('@/services/api-client', () => ({
   resetAuth: jest.fn(),
 }));
 
-const mockConfigureAuth = configureAuth as jest.MockedFunction<typeof configureAuth>;
+const mockConfigureAuth = configureAuth as jest.MockedFunction<
+  typeof configureAuth
+>;
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -42,7 +48,11 @@ function Inspector() {
 
 function LoginButton() {
   const { login } = useAuthContext();
-  return <button onClick={() => void login('user@example.com', 'password123')}>Login</button>;
+  return (
+    <button onClick={() => void login('user@example.com', 'password123')}>
+      Login
+    </button>
+  );
 }
 
 function LogoutButton() {
@@ -79,13 +89,15 @@ describe('AC-11: isLoading state during session init', () => {
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
     // Initially loading
     expect(screen.getByTestId('loading').textContent).toBe('true');
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
     expect(screen.getByTestId('user').textContent).toBe('null');
   });
@@ -93,16 +105,20 @@ describe('AC-11: isLoading state during session init', () => {
   it('hydrates user state from existing cookie session on mount', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // refresh
       .mockResolvedValueOnce(fetchOk(MOCK_USER)); // /users/me
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
 
     expect(screen.getByTestId('authenticated').textContent).toBe('true');
     expect(screen.getByTestId('user').textContent).toBe('user@example.com');
@@ -119,23 +135,27 @@ describe('AC-1: login() updates auth state', () => {
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
       .mockResolvedValueOnce(
         // login
-        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })
+        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 }),
       );
 
     const { getByText } = render(
       <AuthProvider>
         <Inspector />
         <LoginButton />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
 
     await act(async () => {
       getByText('Login').click();
     });
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
     expect(screen.getByTestId('user').textContent).toBe('user@example.com');
   });
 });
@@ -168,7 +188,7 @@ describe('AC-2: login() throws on invalid credentials', () => {
     const { getByText } = render(
       <AuthProvider>
         <TryLogin />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
     await waitFor(() => {});
@@ -187,7 +207,9 @@ describe('AC-13: logout() resets context and redirects to /login', () => {
   it('clears user, calls logout endpoint, redirects to /login', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // mount refresh
       .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
       .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout
 
@@ -195,16 +217,20 @@ describe('AC-13: logout() resets context and redirects to /login', () => {
       <AuthProvider>
         <Inspector />
         <LogoutButton />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
     await act(async () => {
       getByText('Logout').click();
     });
 
-    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('null'));
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('null'),
+    );
     expect(mockPush).toHaveBeenCalledWith('/login');
   });
 });
@@ -214,19 +240,25 @@ describe('AC-8: background refresh fires at 80% of TTL', () => {
   it('calls /api/auth/refresh when timer fires', async () => {
     const fetchMock = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // mount refresh
       .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-2', expires_in: 900 })); // background refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-2', expires_in: 900 }),
+      ); // background refresh
 
     global.fetch = fetchMock;
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
     // Advance timer by 80% of 900s = 720s
     await act(async () => {
@@ -244,7 +276,9 @@ describe('AC-9: refresh failure → logout → redirect /login', () => {
   it('redirects to /login when background refresh fails', async () => {
     const fetchMock = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // mount refresh
       .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
       .mockResolvedValueOnce(fetchFail(401)) // background refresh fails
       .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout endpoint
@@ -254,10 +288,12 @@ describe('AC-9: refresh failure → logout → redirect /login', () => {
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
     await act(async () => {
       jest.advanceTimersByTime(720_000);
@@ -272,7 +308,9 @@ describe('scheduleRefresh catch: network error during background refresh', () =>
   it('calls logout and redirects to /login on fetch throw', async () => {
     const fetchMock = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // mount refresh
       .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
       .mockRejectedValueOnce(new Error('Network error')) // background refresh throws
       .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout endpoint
@@ -282,10 +320,12 @@ describe('scheduleRefresh catch: network error during background refresh', () =>
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
     await act(async () => {
       jest.advanceTimersByTime(720_000);
@@ -300,19 +340,24 @@ describe('configureAuth callbacks', () => {
   it('onTokenRefreshed updates access token when mounted', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      )
       .mockResolvedValueOnce(fetchOk(MOCK_USER));
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
     // Capture the callbacks passed to configureAuth and exercise them
-    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const lastCall =
+      mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
     const authArg = lastCall?.[0];
     expect(authArg).toBeDefined();
 
@@ -329,18 +374,23 @@ describe('configureAuth callbacks', () => {
   it('onTokenRefreshed is a no-op when component is unmounted', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      )
       .mockResolvedValueOnce(fetchOk(MOCK_USER));
 
     const { unmount } = render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
-    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const lastCall =
+      mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
     const authArg = lastCall?.[0];
     expect(authArg).toBeDefined();
 
@@ -356,19 +406,24 @@ describe('configureAuth callbacks', () => {
   it('onUnauthorized triggers logout and redirect to /login', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 }))
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      )
       .mockResolvedValueOnce(fetchOk(MOCK_USER))
       .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('authenticated').textContent).toBe('true'),
+    );
 
-    const lastCall = mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
+    const lastCall =
+      mockConfigureAuth.mock.calls[mockConfigureAuth.mock.calls.length - 1];
     const authArg = lastCall?.[0];
     expect(authArg).toBeDefined();
 
@@ -385,16 +440,20 @@ describe('mount session hydration: /users/me failure', () => {
   it('stays unauthenticated when /users/me returns non-ok after refresh', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh ok
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // refresh ok
       .mockResolvedValueOnce(fetchFail(403)); // /users/me fails
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
     expect(screen.getByTestId('user').textContent).toBe('null');
   });
@@ -408,10 +467,12 @@ describe('configureAuth setup error scenarios', () => {
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
     expect(screen.getByTestId('user').textContent).toBe('null');
     expect(mockConfigureAuth).not.toHaveBeenCalled();
@@ -420,16 +481,20 @@ describe('configureAuth setup error scenarios', () => {
   it('resolves loading=false and stays unauthenticated when /users/me fetch throws on mount', async () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh ok
+      .mockResolvedValueOnce(
+        fetchOk({ access_token: 'tok-1', expires_in: 900 }),
+      ) // refresh ok
       .mockRejectedValueOnce(new Error('Network error')); // /users/me throws
 
     render(
       <AuthProvider>
         <Inspector />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
     expect(screen.getByTestId('user').textContent).toBe('null');
     expect(mockConfigureAuth).not.toHaveBeenCalled();
@@ -445,19 +510,23 @@ describe('configureAuth setup error scenarios', () => {
       .fn()
       .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
       .mockResolvedValueOnce(
-        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })
+        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 }),
       ); // login
 
-    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const errSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
 
     const { getByText } = render(
       <AuthProvider>
         <Inspector />
         <LoginButton />
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false'),
+    );
 
     let loginPromise: Promise<unknown> | undefined;
     await act(async () => {
@@ -468,7 +537,9 @@ describe('configureAuth setup error scenarios', () => {
     await loginPromise;
 
     // Auth state was set before the throw — provider remains usable
-    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('user@example.com'));
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('user@example.com'),
+    );
     expect(mockConfigureAuth).toHaveBeenCalled();
 
     errSpy.mockRestore();

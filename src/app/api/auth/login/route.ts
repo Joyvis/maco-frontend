@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+
 import { env } from '@/config/env';
 import {
   COOKIE_ACCESS_TOKEN,
@@ -13,7 +14,10 @@ export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string };
 
   if (!body.email || !body.password) {
-    return NextResponse.json({ message: 'E-mail e senha são obrigatórios' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'E-mail e senha são obrigatórios' },
+      { status: 400 },
+    );
   }
 
   const backendRes = await fetch(`${env.NEXT_PUBLIC_API_URL}/auth/login`, {
@@ -23,9 +27,14 @@ export async function POST(request: Request) {
   });
 
   if (!backendRes.ok) {
-    const err = (await backendRes.json().catch(() => ({}))) as { message?: string };
+    const err = (await backendRes.json().catch(() => ({}))) as {
+      message?: string;
+    };
     const status = backendRes.status === 401 ? 401 : 400;
-    return NextResponse.json({ message: err.message ?? 'E-mail ou senha inválidos' }, { status });
+    return NextResponse.json(
+      { message: err.message ?? 'E-mail ou senha inválidos' },
+      { status },
+    );
   }
 
   const tokens = (await backendRes.json()) as AuthTokens;
@@ -35,7 +44,10 @@ export async function POST(request: Request) {
   });
 
   if (!meRes.ok) {
-    return NextResponse.json({ message: 'Falha ao carregar dados do usuário' }, { status: 502 });
+    return NextResponse.json(
+      { message: 'Falha ao carregar dados do usuário' },
+      { status: 502 },
+    );
   }
 
   const user = (await meRes.json()) as User;
@@ -44,9 +56,13 @@ export async function POST(request: Request) {
   cookieStore.set(
     COOKIE_ACCESS_TOKEN,
     tokens.access_token,
-    accessTokenCookieOptions(tokens.expires_in)
+    accessTokenCookieOptions(tokens.expires_in),
   );
-  cookieStore.set(COOKIE_REFRESH_TOKEN, tokens.refresh_token, refreshTokenCookieOptions());
+  cookieStore.set(
+    COOKIE_REFRESH_TOKEN,
+    tokens.refresh_token,
+    refreshTokenCookieOptions(),
+  );
 
   return NextResponse.json({
     user,

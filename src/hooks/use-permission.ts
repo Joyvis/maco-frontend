@@ -5,11 +5,16 @@ interface UsePermissionResult {
   isLoading: boolean;
 }
 
-export function usePermission(resource: string, action: string): UsePermissionResult {
+export function usePermission(
+  resource: string,
+  action: string,
+): UsePermissionResult {
   const { user, isLoading } = useAuth();
 
   const hasPermission =
-    user?.permissions.some((p) => p.resource === resource && p.action === action) ?? false;
+    user?.permissions.some(
+      (p) => p.resource === resource && p.action === action,
+    ) ?? false;
 
   return { hasPermission, isLoading };
 }

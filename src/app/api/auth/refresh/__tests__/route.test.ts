@@ -4,7 +4,10 @@
 import { POST } from '../route';
 
 jest.mock('@/config/env', () => ({
-  env: { NEXT_PUBLIC_API_URL: 'http://api.test', NEXT_PUBLIC_APP_NAME: 'maco-test' },
+  env: {
+    NEXT_PUBLIC_API_URL: 'http://api.test',
+    NEXT_PUBLIC_APP_NAME: 'maco-test',
+  },
 }));
 
 const cookieGet = jest.fn();
@@ -63,7 +66,9 @@ describe('POST /api/auth/refresh', () => {
     cookieGet.mockReturnValueOnce({ value: 'r1' });
     globalThis.fetch = jest
       .fn()
-      .mockResolvedValueOnce(jsonResponse(TOKENS, 200)) as unknown as typeof fetch;
+      .mockResolvedValueOnce(
+        jsonResponse(TOKENS, 200),
+      ) as unknown as typeof fetch;
 
     const res = await POST();
     expect(res.status).toBe(200);
@@ -72,12 +77,12 @@ describe('POST /api/auth/refresh', () => {
     expect(cookieSet).toHaveBeenCalledWith(
       'access_token',
       'AT2',
-      expect.objectContaining({ maxAge: 600 })
+      expect.objectContaining({ maxAge: 600 }),
     );
     expect(cookieSet).toHaveBeenCalledWith(
       'refresh_token',
       'RT2',
-      expect.objectContaining({ httpOnly: true, sameSite: 'lax' })
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
     );
   });
 });

@@ -4,7 +4,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { DashboardShell } from '@/components/common/dashboard-shell';
 import { MOCK_USER } from '@/config/mock-user';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <UserProvider value={MOCK_USER}>
       <PermissionsProvider>

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,10 @@ import {
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'E-mail é obrigatório').email('Formato de e-mail inválido'),
+  email: z
+    .string()
+    .min(1, 'E-mail é obrigatório')
+    .email('Formato de e-mail inválido'),
   password: z
     .string()
     .min(1, 'Senha é obrigatória')
@@ -48,10 +52,13 @@ function LoginForm() {
     try {
       await login(data.email, data.password);
       const raw = searchParams.get('returnTo') ?? '';
-      const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard';
+      const returnTo =
+        raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard';
       router.push(returnTo);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'E-mail ou senha inválidos');
+      setFormError(
+        err instanceof Error ? err.message : 'E-mail ou senha inválidos',
+      );
     }
   };
 
@@ -60,18 +67,22 @@ function LoginForm() {
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Entrar</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Insira suas credenciais para acessar a plataforma
           </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
             {formError && (
               <div
                 role="alert"
                 className={cn(
-                  'rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                  'border-destructive/50 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm',
                 )}
               >
                 {formError}
@@ -116,7 +127,11 @@ function LoginForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+            >
               {form.formState.isSubmitting ? 'Entrando…' : 'Entrar'}
             </Button>
           </form>

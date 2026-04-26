@@ -2,9 +2,11 @@
  * @jest-environment node
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { middleware } from '../middleware';
+
 import { decodeToken, isTokenExpired } from '@/lib/auth/jwt';
 import type { JWTPayload } from '@/types/auth';
+
+import { middleware } from '../middleware';
 
 jest.mock('@/lib/auth/jwt', () => ({
   decodeToken: jest.fn(),
@@ -12,7 +14,9 @@ jest.mock('@/lib/auth/jwt', () => ({
 }));
 
 const mockDecodeToken = decodeToken as jest.MockedFunction<typeof decodeToken>;
-const mockIsTokenExpired = isTokenExpired as jest.MockedFunction<typeof isTokenExpired>;
+const mockIsTokenExpired = isTokenExpired as jest.MockedFunction<
+  typeof isTokenExpired
+>;
 
 const MOCK_PAYLOAD: JWTPayload = {
   sub: 'user-1',
@@ -28,15 +32,18 @@ beforeEach(() => jest.clearAllMocks());
 
 // ─── AC-6: public routes pass through ────────────────────────────────────────
 describe('AC-6: public routes are accessible without authentication', () => {
-  it.each(['/login', '/sign-up', '/forgot-password', '/reset-password', '/accept-invite'])(
-    '%s passes through without redirect',
-    async (path) => {
-      const request = new NextRequest(`http://localhost${path}`);
-      const response = await middleware(request);
-      expect(response.status).not.toBe(307);
-      expect(response.status).not.toBe(302);
-    }
-  );
+  it.each([
+    '/login',
+    '/sign-up',
+    '/forgot-password',
+    '/reset-password',
+    '/accept-invite',
+  ])('%s passes through without redirect', async (path) => {
+    const request = new NextRequest(`http://localhost${path}`);
+    const response = await middleware(request);
+    expect(response.status).not.toBe(307);
+    expect(response.status).not.toBe(302);
+  });
 });
 
 // ─── AC-5: unauthenticated redirect ──────────────────────────────────────────
@@ -78,7 +85,7 @@ describe('AC-7: authenticated requests with valid token pass through', () => {
     expect(nextSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({ headers: expect.anything() }),
-      })
+      }),
     );
 
     const forwardedHeaders: Headers = (
@@ -107,7 +114,9 @@ describe('middleware refresh paths', () => {
       ok: true,
       headers: { getSetCookie: () => setCookies },
     };
-    globalThis.fetch = jest.fn().mockResolvedValue(fakeRes) as unknown as typeof fetch;
+    globalThis.fetch = jest
+      .fn()
+      .mockResolvedValue(fakeRes) as unknown as typeof fetch;
   }
 
   function mockFetchFail() {
@@ -115,7 +124,9 @@ describe('middleware refresh paths', () => {
       ok: false,
       headers: { getSetCookie: () => [] },
     };
-    globalThis.fetch = jest.fn().mockResolvedValue(fakeRes) as unknown as typeof fetch;
+    globalThis.fetch = jest
+      .fn()
+      .mockResolvedValue(fakeRes) as unknown as typeof fetch;
   }
 
   it('no access token + refresh cookie → silently refreshes and forwards Set-Cookie', async () => {
@@ -133,7 +144,7 @@ describe('middleware refresh paths', () => {
     ]);
     expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: '/api/auth/refresh' }),
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST' }),
     );
   });
 
@@ -162,7 +173,9 @@ describe('middleware refresh paths', () => {
     const response = await middleware(request);
 
     expect(response.status).toBe(200);
-    expect(response.headers.getSetCookie()).toEqual(['access_token=fresh; Path=/']);
+    expect(response.headers.getSetCookie()).toEqual([
+      'access_token=fresh; Path=/',
+    ]);
   });
 
   it('access token decodes to null + refresh cookie → silent refresh succeeds', async () => {
@@ -175,7 +188,9 @@ describe('middleware refresh paths', () => {
     const response = await middleware(request);
 
     expect(response.status).toBe(200);
-    expect(response.headers.getSetCookie()).toEqual(['access_token=fresh; Path=/']);
+    expect(response.headers.getSetCookie()).toEqual([
+      'access_token=fresh; Path=/',
+    ]);
   });
 
   it('expired access token + refresh cookie + refresh fails → redirects to /login', async () => {
