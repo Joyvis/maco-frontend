@@ -1,0 +1,266 @@
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import { AuthProvider, useAuthContext } from '@/providers/auth-provider';
+
+jest.mock('@/config/env', () => ({
+  env: { NEXT_PUBLIC_API_URL: 'http://localhost:8000', NEXT_PUBLIC_APP_NAME: 'Maco' },
+}));
+
+jest.mock('@/services/api-client', () => ({
+  configureAuth: jest.fn(),
+  resetAuth: jest.fn(),
+}));
+
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
+const MOCK_USER = {
+  id: 'user-1',
+  email: 'user@example.com',
+  name: 'Test User',
+  tenant_id: 'tenant-abc',
+  roles: ['admin'],
+  permissions: [{ resource: 'tickets', action: 'write' }],
+};
+
+function Inspector() {
+  const { user, tenant, isAuthenticated, isLoading } = useAuthContext();
+  return (
+    <div>
+      <span data-testid="user">{user ? user.email : 'null'}</span>
+      <span data-testid="tenant">{tenant ?? 'null'}</span>
+      <span data-testid="authenticated">{String(isAuthenticated)}</span>
+      <span data-testid="loading">{String(isLoading)}</span>
+    </div>
+  );
+}
+
+function LoginButton() {
+  const { login } = useAuthContext();
+  return (
+    <button
+      onClick={() => void login('user@example.com', 'password123')}
+    >
+      Login
+    </button>
+  );
+}
+
+function LogoutButton() {
+  const { logout } = useAuthContext();
+  return <button onClick={() => void logout()}>Logout</button>;
+}
+
+function fetchOk(body: unknown) {
+  return { ok: true, json: async () => body } as Response;
+}
+
+function fetchFail(status = 401) {
+  return { ok: false, status, json: async () => ({ message: 'E-mail ou senha inválidos' }) } as Response;
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+// ─── AC-11: useAuth returns correct initial state ────────────────────────────
+describe('AC-11: isLoading state during session init', () => {
+  it('starts as loading and resolves to unauthenticated when no session', async () => {
+    global.fetch = jest.fn().mockResolvedValue(fetchFail(401));
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    // Initially loading
+    expect(screen.getByTestId('loading').textContent).toBe('true');
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    expect(screen.getByTestId('user').textContent).toBe('null');
+  });
+
+  it('hydrates user state from existing cookie session on mount', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // refresh
+      .mockResolvedValueOnce(fetchOk(MOCK_USER)); // /users/me
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+
+    expect(screen.getByTestId('authenticated').textContent).toBe('true');
+    expect(screen.getByTestId('user').textContent).toBe('user@example.com');
+    expect(screen.getByTestId('tenant').textContent).toBe('tenant-abc');
+  });
+});
+
+// ─── AC-1: login() populates user state ─────────────────────────────────────
+describe('AC-1: login() updates auth state', () => {
+  it('sets user and token after successful login', async () => {
+    // Mount: no session
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
+      .mockResolvedValueOnce( // login
+        fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 })
+      );
+
+    const { getByText } = render(
+      <AuthProvider>
+        <Inspector />
+        <LoginButton />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+
+    await act(async () => {
+      getByText('Login').click();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    expect(screen.getByTestId('user').textContent).toBe('user@example.com');
+  });
+});
+
+// ─── AC-2: login() with invalid credentials throws ──────────────────────────
+describe('AC-2: login() throws on invalid credentials', () => {
+  it('throws Error with backend message on 401', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh
+      .mockResolvedValueOnce(fetchFail(401)); // login
+
+    let caughtMessage = '';
+
+    function TryLogin() {
+      const { login } = useAuthContext();
+      return (
+        <button
+          onClick={() =>
+            login('bad@example.com', 'wrongpass').catch((e: Error) => {
+              caughtMessage = e.message;
+            })
+          }
+        >
+          Login
+        </button>
+      );
+    }
+
+    const { getByText } = render(
+      <AuthProvider>
+        <TryLogin />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {});
+
+    await act(async () => {
+      getByText('Login').click();
+    });
+
+    await waitFor(() => expect(caughtMessage).not.toBe(''));
+    expect(caughtMessage).toBeTruthy();
+  });
+});
+
+// ─── AC-13: logout() resets state and redirects ─────────────────────────────
+describe('AC-13: logout() resets context and redirects to /login', () => {
+  it('clears user, calls logout endpoint, redirects to /login', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
+      .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout
+
+    const { getByText } = render(
+      <AuthProvider>
+        <Inspector />
+        <LogoutButton />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    await act(async () => {
+      getByText('Logout').click();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('null'));
+    expect(mockPush).toHaveBeenCalledWith('/login');
+  });
+});
+
+// ─── AC-8: background refresh scheduled at 80% TTL ──────────────────────────
+describe('AC-8: background refresh fires at 80% of TTL', () => {
+  it('calls /api/auth/refresh when timer fires', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-2', expires_in: 900 })); // background refresh
+
+    global.fetch = fetchMock;
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    // Advance timer by 80% of 900s = 720s
+    await act(async () => {
+      jest.advanceTimersByTime(720_000);
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    const lastCall = fetchMock.mock.calls[2] as [string, unknown];
+    expect(lastCall[0]).toBe('/api/auth/refresh');
+  });
+});
+
+// ─── AC-9: refresh failure clears session and redirects ─────────────────────
+describe('AC-9: refresh failure → logout → redirect /login', () => {
+  it('redirects to /login when background refresh fails', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(fetchOk({ access_token: 'tok-1', expires_in: 900 })) // mount refresh
+      .mockResolvedValueOnce(fetchOk(MOCK_USER)) // /users/me
+      .mockResolvedValueOnce(fetchFail(401)) // background refresh fails
+      .mockResolvedValueOnce(fetchOk({ message: 'ok' })); // logout endpoint
+
+    global.fetch = fetchMock;
+
+    render(
+      <AuthProvider>
+        <Inspector />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+
+    await act(async () => {
+      jest.advanceTimersByTime(720_000);
+    });
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+});

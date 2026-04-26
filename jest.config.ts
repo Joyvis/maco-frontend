@@ -10,6 +10,7 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true, noUncheckedIndexedAccess: true } }],
   },
+  transformIgnorePatterns: ['/node_modules/(?!(jose)/)'],
   coverageThreshold: {
     global: {
       branches: 80,
