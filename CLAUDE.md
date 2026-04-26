@@ -4,6 +4,7 @@
 
 - Next.js 16 (App Router), TypeScript 5 strict, Tailwind CSS 4, shadcn/ui (New York style)
 - React 19, Zod for runtime validation, Jest + ts-jest for unit tests
+- TanStack Query v5 (`@tanstack/react-query`) for server-state cache; Devtools auto-included in dev only
 
 ## Layout
 
@@ -41,6 +42,10 @@ npm test             # Jest unit tests
 - ESLint uses flat config (`eslint.config.mjs`); `next lint` is removed in Next.js 16 — use `eslint .` directly
 - `eslint-plugin-tailwindcss` points to `src/app/globals.css` for Tailwind v4 class ordering; `no-custom-classname` is off (shadcn theme variables)
 - Pre-commit hook runs `lint-staged` via Husky; staged `.ts/.tsx` files are auto-fixed then formatted
+- **API client** (`services/api-client.ts`): native `fetch` wrapper — no axios. Call `configureAuth(config)` once (e.g. in auth provider) to inject token/tenantId getters. Handles 401 refresh with queuing, 403/5xx/network errors.
+- **Auth wiring**: `configureAuth` accepts `{ getToken, getRefreshToken, getTenantId, onTokenRefreshed }`. Auth provider must call this; until then headers are omitted.
+- **Query keys**: use factory pattern (see `serviceKeys` in `services/services.ts`) for all resources — enables targeted cache invalidation.
+- **Pagination**: `usePaginatedQuery(keyFactory, fetcher, { pageSize })` in `hooks/use-paginated-query.ts` — offset-based only; cursor-based deferred.
 
 ## CI Pipeline
 
