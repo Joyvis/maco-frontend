@@ -17,12 +17,9 @@ vi.mock('sonner', () => ({
 }));
 
 const mockPush = vi.fn();
-const mockReplace = vi.fn();
-const mockGet = vi.fn<(key: string) => string | null>().mockReturnValue(null);
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => ({ get: mockGet }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
 const mockFetch = vi.fn<typeof fetch>();
