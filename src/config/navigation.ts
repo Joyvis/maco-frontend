@@ -78,4 +78,6 @@ export const SEGMENT_LABELS: Record<string, string> = {
   tenant: 'Tenant',
   pagamentos: 'Políticas de Pagamento',
   perfil: 'Perfil',
+  novo: 'Novo Usuário',
+  convidar: 'Convidar Usuário',
 };

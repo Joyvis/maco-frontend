@@ -6,5 +6,8 @@ export type Permission =
   | 'catalog:write'
   | 'team:read'
   | 'team:manage'
+  | 'users:read'
+  | 'users:create'
+  | 'users:update'
   | 'settings:read'
   | 'settings:admin';
