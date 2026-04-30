@@ -54,7 +54,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     requiredPermission: 'settings:read',
     children: [
-      { label: 'Tenant', href: '/configuracoes/tenant' },
+      { label: 'Tenant', href: '/configuracoes/tenant/perfil' },
       { label: 'Políticas de Pagamento', href: '/configuracoes/pagamentos' },
     ],
   },
@@ -80,4 +80,5 @@ export const SEGMENT_LABELS: Record<string, string> = {
   perfil: 'Perfil',
   novo: 'Novo Usuário',
   convidar: 'Convidar Usuário',
+  configs: 'Configurações',
 };
