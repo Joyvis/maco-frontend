@@ -1,19 +1,18 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
-import type { Mock } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
 
+import type { Role } from '@/types/role';
 import { apiClient } from '@/services/api-client';
-import { roleKeys, useRoles } from '@/services/roles';
-import type { ApiResponse } from '@/types/api';
-import type { Role } from '@/types/user-management';
 
-vi.mock('@/config/env', () => ({
-  env: {
-    NEXT_PUBLIC_API_URL: 'http://localhost:8000',
-    NEXT_PUBLIC_APP_NAME: 'Maco',
-  },
-}));
+import {
+  useRoles,
+  useRole,
+  useCreateRole,
+  useUpdateRole,
+  useDeleteRole,
+  roleKeys,
+} from '../roles';
 
 vi.mock('@/services/api-client', () => ({
   apiClient: {
@@ -22,55 +21,120 @@ vi.mock('@/services/api-client', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
-  configureAuth: vi.fn(),
-  resetAuth: vi.fn(),
 }));
 
+const mockApiClient = apiClient as {
+  get: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
+  patch: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+};
+
+const mockRole: Role = {
+  id: '1',
+  name: 'Admin',
+  is_system: true,
+  user_count: 3,
+  created_at: '2024-01-01T00:00:00Z',
+  permissions: [{ resource: 'users', action: 'read' }],
+};
+
 function makeWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      children,
-    );
-  };
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client: qc }, children);
+  Wrapper.displayName = 'TestWrapper';
+  return Wrapper;
 }
 
-describe('roleKeys factory', () => {
-  it('all returns base key', () => {
-    expect(roleKeys.all).toEqual(['roles']);
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
-  it('lists() returns list key', () => {
+describe('roleKeys', () => {
+  it('returns stable keys', () => {
+    expect(roleKeys.all).toEqual(['roles']);
     expect(roleKeys.lists()).toEqual(['roles', 'list']);
+    expect(roleKeys.detail('1')).toEqual(['roles', 'detail', '1']);
   });
 });
 
 describe('useRoles', () => {
-  it('returns list of roles', async () => {
-    const mockRoles: Role[] = [
-      { id: 'r1', name: 'Admin' },
-      { id: 'r2', name: 'Operador' },
-    ];
-    const mockResponse: ApiResponse<Role[]> = { data: mockRoles };
-    (apiClient.get as Mock).mockResolvedValue(mockResponse);
+  it('fetches paginated roles', async () => {
+    mockApiClient.get.mockResolvedValue({
+      data: [mockRole],
+      meta: { total: 1, page: 1, page_size: 10 },
+    });
 
     const { result } = renderHook(() => useRoles(), { wrapper: makeWrapper() });
-
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data).toEqual(mockRoles);
-    expect(apiClient.get).toHaveBeenCalledWith('/roles');
+    expect(result.current.data).toEqual([mockRole]);
+  });
+});
+
+describe('useRole', () => {
+  it('fetches a single role by id', async () => {
+    mockApiClient.get.mockResolvedValue({ data: mockRole });
+
+    const { result } = renderHook(() => useRole('1'), {
+      wrapper: makeWrapper(),
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.data).toEqual(mockRole);
   });
 
-  it('returns undefined when loading', () => {
-    (apiClient.get as Mock).mockReturnValue(new Promise(() => undefined));
+  it('does not fetch when id is empty', () => {
+    const { result } = renderHook(() => useRole(''), {
+      wrapper: makeWrapper(),
+    });
+    expect(result.current.isLoading).toBe(false);
+    expect(mockApiClient.get).not.toHaveBeenCalled();
+  });
+});
 
-    const { result } = renderHook(() => useRoles(), { wrapper: makeWrapper() });
+describe('useCreateRole', () => {
+  it('posts to /roles and invalidates list', async () => {
+    mockApiClient.post.mockResolvedValue({ data: mockRole });
 
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.data).toBeUndefined();
+    const { result } = renderHook(() => useCreateRole(), {
+      wrapper: makeWrapper(),
+    });
+    result.current.mutate({ name: 'Admin', permissions: [] });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiClient.post).toHaveBeenCalledWith('/roles', {
+      name: 'Admin',
+      permissions: [],
+    });
+  });
+});
+
+describe('useUpdateRole', () => {
+  it('patches /roles/:id', async () => {
+    mockApiClient.patch.mockResolvedValue({ data: mockRole });
+
+    const { result } = renderHook(() => useUpdateRole('1'), {
+      wrapper: makeWrapper(),
+    });
+    result.current.mutate({ name: 'Updated Admin' });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiClient.patch).toHaveBeenCalledWith('/roles/1', {
+      name: 'Updated Admin',
+    });
+  });
+});
+
+describe('useDeleteRole', () => {
+  it('deletes /roles/:id', async () => {
+    mockApiClient.delete.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useDeleteRole(), {
+      wrapper: makeWrapper(),
+    });
+    result.current.mutate('1');
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/roles/1');
   });
 });
