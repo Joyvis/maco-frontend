@@ -8,7 +8,13 @@ import { PageHeader } from '@/components/common/page-header';
 import { RoleForm } from '@/components/common/role-form';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
-import { useRole, useUpdateRole, useDeleteRole } from '@/services/roles';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  useRole,
+  useUpdateRole,
+  useDeleteRole,
+  useRoleUsers,
+} from '@/services/roles';
 import type { CreateRoleInput } from '@/types/role';
 
 interface EditRolePageProps {
@@ -19,6 +25,7 @@ export default function EditRolePage({ params }: EditRolePageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { data: role, isLoading } = useRole(id);
+  const { data: roleUsers, isLoading: isLoadingUsers } = useRoleUsers(id);
   const { mutateAsync: updateRole, isPending: isUpdating } = useUpdateRole(id);
   const { mutateAsync: deleteRole, isPending: isDeleting } = useDeleteRole();
 
@@ -69,7 +76,41 @@ export default function EditRolePage({ params }: EditRolePageProps) {
           />
         )}
       </PageHeader>
-      <RoleForm role={role} onSubmit={handleSubmit} isLoading={isUpdating} />
+      <Tabs defaultValue="papel">
+        <TabsList>
+          <TabsTrigger value="papel">Papel</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+        </TabsList>
+        <TabsContent value="papel">
+          <RoleForm
+            role={role}
+            onSubmit={handleSubmit}
+            isLoading={isUpdating}
+          />
+        </TabsContent>
+        <TabsContent value="usuarios">
+          {isLoadingUsers ? (
+            <p className="text-muted-foreground text-sm">
+              Carregando usuários...
+            </p>
+          ) : !roleUsers?.length ? (
+            <p className="text-muted-foreground text-sm">
+              Nenhum usuário atribuído a este papel.
+            </p>
+          ) : (
+            <ul className="divide-y rounded-md border">
+              {roleUsers.map((user) => (
+                <li key={user.id} className="flex flex-col px-4 py-3">
+                  <span className="font-medium">{user.name}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {user.email}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

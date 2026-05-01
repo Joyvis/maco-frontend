@@ -14,7 +14,7 @@ export const ACTIONS = ['create', 'read', 'update', 'delete'] as const;
 export type Action = (typeof ACTIONS)[number];
 
 export const RESOURCE_LABELS: Record<Resource, string> = {
-  tenants: 'Tenants',
+  tenants: 'Inquilinos',
   users: 'Usuários',
   roles: 'Papéis',
   services: 'Serviços',
@@ -31,8 +31,8 @@ export const ACTION_LABELS: Record<Action, string> = {
 };
 
 export interface RolePermission {
-  resource: string;
-  action: string;
+  resource: Resource;
+  action: Action;
 }
 
 export interface Role {

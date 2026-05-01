@@ -90,4 +90,26 @@ describe('RolesPage', () => {
     await userEvent.click(moreButtons[0]!);
     expect(screen.queryByText(/excluir/i)).not.toBeInTheDocument();
   });
+
+  it('renders system roles before custom roles regardless of API order', async () => {
+    await setup([mockCustomRole, mockSystemRole]);
+    const rows = screen.getAllByRole('row');
+    const rowTexts = rows.map((r) => r.textContent ?? '');
+    const administradorIndex = rowTexts.findIndex((t) =>
+      t.includes('Administrador'),
+    );
+    const editorIndex = rowTexts.findIndex((t) => t.includes('Editor'));
+    expect(administradorIndex).toBeLessThan(editorIndex);
+  });
+
+  it('shows confirmation dialog when delete is clicked for custom role', async () => {
+    await setup([mockCustomRole]);
+    const moreButtons = screen.getAllByRole('button', { name: /ações/i });
+    await userEvent.click(moreButtons[0]!);
+    await userEvent.click(screen.getByText(/excluir/i));
+    expect(await screen.findByText(/excluir papel/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/esta ação não pode ser desfeita/i),
+    ).toBeInTheDocument();
+  });
 });
