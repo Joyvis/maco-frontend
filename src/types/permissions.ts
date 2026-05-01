@@ -10,4 +10,7 @@ export type Permission =
   | 'users:create'
   | 'users:update'
   | 'settings:read'
-  | 'settings:admin';
+  | 'settings:admin'
+  | 'qualifications:read'
+  | 'qualifications:create'
+  | 'qualifications:delete';

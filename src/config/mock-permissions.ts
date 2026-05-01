@@ -13,4 +13,7 @@ export const MOCK_PERMISSIONS: Permission[] = [
   'users:update',
   'settings:read',
   'settings:admin',
+  'qualifications:read',
+  'qualifications:create',
+  'qualifications:delete',
 ];

@@ -63,7 +63,9 @@ npx playwright install --with-deps chromium  # first-time browser install
 - **Permissions**: `src/providers/permissions-provider.tsx` — mock provider; replace with real auth integration in a future ticket
 - **Sidebar collapse**: state persisted in `localStorage` under key `maco-sidebar-state`; initialized via lazy `useState` (not `useEffect`) to avoid ESLint `react-hooks/set-state-in-effect`
 - **DataTable** (`src/components/common/data-table.tsx`): built on `@tanstack/react-table` v8 — React Compiler emits a warning for `useReactTable` (known library incompatibility, not a bug)
-- **Common components**: `page-header`, `empty-state`, `breadcrumbs`, `data-table`, `confirm-dialog`, `loading-skeleton`, `error-boundary` all live in `src/components/common/`
+- **Common components**: `page-header`, `empty-state`, `breadcrumbs`, `data-table`, `confirm-dialog`, `loading-skeleton`, `error-boundary`, `qualification-list`, `qualification-adder` all live in `src/components/common/`
+- **Qualifications (MACO-68)**: `QualificationList` + `QualificationAdder` power both the "By Staff" tab in `/equipe/usuarios/[id]` and the "Equipe Qualificada" tab in `/catalogo/servicos/[id]`. Service hooks live in `src/services/qualifications.ts`; types in `src/types/qualification.ts`. Requires permissions: `qualifications:read`, `qualifications:create`, `qualifications:delete`.
+- **Vitest setup**: `vitest.setup.ts` includes jsdom polyfills for `hasPointerCapture`, `setPointerCapture`, `releasePointerCapture`, `scrollIntoView` (required by Radix UI Select and other Radix primitives in test environments)
 
 ## CI Pipeline
 
