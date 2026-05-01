@@ -13,6 +13,7 @@ vi.mock('@/services/products', () => ({
   useProducts: vi.fn(),
   useActivateProduct: vi.fn(),
   useArchiveProduct: vi.fn(),
+  useCategories: vi.fn(),
 }));
 
 const mockDraftProduct: Product = {
@@ -44,11 +45,12 @@ const mockArchivedProduct: Product = {
 };
 
 async function setup(products: Product[]) {
-  const { useProducts, useActivateProduct, useArchiveProduct } =
+  const { useProducts, useActivateProduct, useArchiveProduct, useCategories } =
     await vi.importMock<{
       useProducts: ReturnType<typeof vi.fn>;
       useActivateProduct: ReturnType<typeof vi.fn>;
       useArchiveProduct: ReturnType<typeof vi.fn>;
+      useCategories: ReturnType<typeof vi.fn>;
     }>('@/services/products');
 
   useProducts.mockReturnValue({
@@ -64,6 +66,7 @@ async function setup(products: Product[]) {
     mutateAsync: vi.fn().mockResolvedValue(undefined),
     isPending: false,
   });
+  useCategories.mockReturnValue({ data: [], isLoading: false });
 
   const { default: ProductsPage } = await import('../page');
   return render(<ProductsPage />);
@@ -148,5 +151,39 @@ describe('ProductsPage', () => {
   it('shows category when present', async () => {
     await setup([mockDraftProduct]);
     expect(screen.getByText('Cabelo')).toBeInTheDocument();
+  });
+
+  it('status filter hides non-matching rows', async () => {
+    const {
+      useProducts,
+      useActivateProduct,
+      useArchiveProduct,
+      useCategories,
+    } = await vi.importMock<{
+      useProducts: ReturnType<typeof vi.fn>;
+      useActivateProduct: ReturnType<typeof vi.fn>;
+      useArchiveProduct: ReturnType<typeof vi.fn>;
+      useCategories: ReturnType<typeof vi.fn>;
+    }>('@/services/products');
+
+    useProducts.mockReturnValue({
+      data: [mockDraftProduct],
+      isLoading: false,
+    });
+    useActivateProduct.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    });
+    useArchiveProduct.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    });
+    useCategories.mockReturnValue({ data: [], isLoading: false });
+
+    const { default: ProductsPage } = await import('../page');
+    render(<ProductsPage />);
+
+    expect(screen.getByText('Shampoo Premium')).toBeInTheDocument();
+    expect(screen.queryByText('Condicionador Plus')).not.toBeInTheDocument();
   });
 });

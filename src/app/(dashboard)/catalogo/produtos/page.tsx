@@ -10,6 +10,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { PageHeader } from '@/components/common/page-header';
 import { DataTable } from '@/components/common/data-table';
 import { ProductStatusBadge } from '@/components/common/product-status-badge';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ import {
   useProducts,
   useActivateProduct,
   useArchiveProduct,
+  useCategories,
 } from '@/services/products';
 import { PRODUCT_UNIT_LABELS } from '@/types/product';
 import type { Product, ProductStatus } from '@/types/product';
@@ -63,16 +65,25 @@ function ProductRowActions({ product }: { product: Product }) {
           </DropdownMenuItem>
         )}
         {product.status !== 'archived' && (
-          <DropdownMenuItem
-            onClick={async () => {
+          <ConfirmDialog
+            title="Arquivar Produto"
+            description={`Tem certeza que deseja arquivar "${product.name}"? O produto ficará indisponível.`}
+            confirmLabel="Arquivar"
+            variant="destructive"
+            onConfirm={async () => {
               await archive(product.id);
               toast.success('Produto arquivado com sucesso.');
             }}
-            className="text-destructive focus:text-destructive"
-          >
-            <Archive className="mr-2 size-4" />
-            Arquivar
-          </DropdownMenuItem>
+            trigger={
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Archive className="mr-2 size-4" />
+                Arquivar
+              </DropdownMenuItem>
+            }
+          />
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -130,6 +141,7 @@ export default function ProductsPage() {
     status: apiStatus,
     category: apiCategory,
   });
+  const { data: categories } = useCategories();
 
   return (
     <div className="space-y-6">
@@ -162,6 +174,11 @@ export default function ProductsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

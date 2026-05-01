@@ -6,15 +6,14 @@ import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/common/page-header';
 import { ProductForm } from '@/components/common/product-form';
-import { ProductStatusBadge } from '@/components/common/product-status-badge';
-import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { Button } from '@/components/ui/button';
+import { LifecycleActions } from '@/components/common/lifecycle-actions';
 import {
   useProduct,
   useUpdateProduct,
   useActivateProduct,
   useArchiveProduct,
 } from '@/services/products';
+import { PRODUCT_STATUS_LABELS } from '@/types/product';
 import type { CreateProductInput } from '@/types/product';
 
 interface EditProductPageProps {
@@ -57,39 +56,23 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader title={`Editar Produto: ${product.name}`}>
-        <div className="flex items-center gap-3">
-          <ProductStatusBadge status={product.status} />
-          {product.status !== 'active' && (
-            <Button
-              size="sm"
-              disabled={isActivating}
-              onClick={async () => {
-                await activate(id);
-                toast.success('Produto ativado com sucesso.');
-              }}
-            >
-              Ativar
-            </Button>
-          )}
-          {product.status !== 'archived' && (
-            <ConfirmDialog
-              title="Arquivar Produto"
-              description={`Tem certeza que deseja arquivar "${product.name}"? O produto ficará indisponível.`}
-              confirmLabel="Arquivar"
-              variant="destructive"
-              onConfirm={async () => {
-                await archive(id);
-                toast.success('Produto arquivado com sucesso.');
-                router.push('/catalogo/produtos');
-              }}
-              trigger={
-                <Button variant="destructive" size="sm" disabled={isArchiving}>
-                  Arquivar
-                </Button>
-              }
-            />
-          )}
-        </div>
+        <LifecycleActions
+          status={product.status}
+          statusLabel={PRODUCT_STATUS_LABELS[product.status]}
+          entityName={product.name}
+          archiveDescription={`Tem certeza que deseja arquivar "${product.name}"? O produto ficará indisponível.`}
+          isActivating={isActivating}
+          isArchiving={isArchiving}
+          onActivate={async () => {
+            await activate(id);
+            toast.success('Produto ativado com sucesso.');
+          }}
+          onArchive={async () => {
+            await archive(id);
+            toast.success('Produto arquivado com sucesso.');
+            router.push('/catalogo/produtos');
+          }}
+        />
       </PageHeader>
       <ProductForm
         product={product}
