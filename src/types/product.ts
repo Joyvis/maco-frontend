@@ -30,6 +30,15 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
+  display_order?: number;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
 }
 
 export interface CreateProductInput {
