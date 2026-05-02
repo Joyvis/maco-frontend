@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components/common/page-header';
 
-import { UserEditView } from '../_components/user-edit-view';
+import { UserDetailTabs } from '../_components/user-detail-tabs';
 
 interface EditUserPageProps {
   params: Promise<{ id: string }>;
@@ -14,9 +14,7 @@ export default async function EditarUsuarioPage({ params }: EditUserPageProps) {
         title="Editar usuário"
         description="Atualize os dados do usuário"
       />
-      <div className="max-w-lg">
-        <UserEditView userId={id} />
-      </div>
+      <UserDetailTabs userId={id} />
     </div>
   );
 }
