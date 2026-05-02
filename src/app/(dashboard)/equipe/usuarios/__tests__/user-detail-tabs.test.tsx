@@ -6,7 +6,7 @@ import { PermissionsProvider } from '@/providers/permissions-provider';
 import type { Permission } from '@/types/permissions';
 import type { ManagedUser } from '@/types/user-management';
 import type { StaffQualification } from '@/types/qualification';
-import type { Service } from '@/services/services';
+import type { Service } from '@/types/service';
 
 vi.mock('@/config/env', () => ({
   env: {
@@ -58,9 +58,9 @@ const MOCK_QUALIFICATIONS: StaffQualification[] = [
 ];
 
 const MOCK_SERVICES: Service[] = [
-  { id: 's1', name: 'Corte de Cabelo', status: 'active' },
-  { id: 's2', name: 'Manicure', status: 'active' },
-  { id: 's3', name: 'Pedicure', status: 'active' },
+  { id: 's1', name: 'Corte de Cabelo', status: 'active' } as Service,
+  { id: 's2', name: 'Manicure', status: 'active' } as Service,
+  { id: 's3', name: 'Pedicure', status: 'active' } as Service,
 ];
 
 function makeWrapper(
