@@ -1,21 +1,17 @@
-import { PermissionsProvider } from '@/providers/permissions-provider';
-import { UserProvider } from '@/providers/user-provider';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { DashboardShell } from '@/components/common/dashboard-shell';
-import { MOCK_USER } from '@/config/mock-user';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-export default function DashboardLayout({
+import { DashboardShellWrapper } from '@/components/common/dashboard-shell-wrapper';
+import { COOKIE_REFRESH_TOKEN } from '@/lib/auth/cookies';
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <UserProvider value={MOCK_USER}>
-      <PermissionsProvider>
-        <TooltipProvider>
-          <DashboardShell>{children}</DashboardShell>
-        </TooltipProvider>
-      </PermissionsProvider>
-    </UserProvider>
-  );
+  const cookieStore = await cookies();
+  if (!cookieStore.get(COOKIE_REFRESH_TOKEN)) {
+    redirect('/login');
+  }
+  return <DashboardShellWrapper>{children}</DashboardShellWrapper>;
 }

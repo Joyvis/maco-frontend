@@ -35,7 +35,7 @@ export function useProducts(
   return usePaginatedQuery<Product>(
     (params) => productKeys.list({ ...filters, ...params }),
     (params) =>
-      apiClient.get<PaginatedResponse<Product>>('/products', {
+      apiClient.get<PaginatedResponse<Product>>('/catalog/products', {
         ...filters,
         ...params,
       }),
