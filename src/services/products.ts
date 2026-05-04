@@ -46,7 +46,8 @@ export function useProducts(
 export function useProduct(id: string) {
   const { data, ...rest } = useQuery({
     queryKey: productKeys.detail(id),
-    queryFn: () => apiClient.get<ApiResponse<Product>>(`/products/${id}`),
+    queryFn: () =>
+      apiClient.get<ApiResponse<Product>>(`/catalog/products/${id}`),
     enabled: Boolean(id),
   });
   return { data: data?.data, ...rest };
@@ -55,7 +56,8 @@ export function useProduct(id: string) {
 export function useCategories() {
   const { data, ...rest } = useQuery({
     queryKey: categoryKeys.lists(),
-    queryFn: () => apiClient.get<ApiResponse<Category[]>>('/categories'),
+    queryFn: () =>
+      apiClient.get<ApiResponse<Category[]>>('/catalog/categories'),
   });
   return { data: data?.data ?? [], ...rest };
 }
@@ -64,7 +66,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateProductInput) =>
-      apiClient.post<ApiResponse<Product>>('/products', input),
+      apiClient.post<ApiResponse<Product>>('/catalog/products', input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
@@ -75,7 +77,7 @@ export function useUpdateProduct(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateProductInput) =>
-      apiClient.patch<ApiResponse<Product>>(`/products/${id}`, input),
+      apiClient.patch<ApiResponse<Product>>(`/catalog/products/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
@@ -87,7 +89,7 @@ export function useActivateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.post<ApiResponse<Product>>(`/products/${id}/activate`),
+      apiClient.post<ApiResponse<Product>>(`/catalog/products/${id}/activate`),
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
@@ -99,7 +101,7 @@ export function useArchiveProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.post<ApiResponse<Product>>(`/products/${id}/archive`),
+      apiClient.post<ApiResponse<Product>>(`/catalog/products/${id}/archive`),
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
