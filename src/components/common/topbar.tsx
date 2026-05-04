@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Menu, Sun, Moon, Monitor } from 'lucide-react';
 
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/providers/user-provider';
+import { useAuth } from '@/hooks/use-auth';
 
 import { Breadcrumbs } from './breadcrumbs';
 
@@ -35,10 +35,6 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-function signOut() {
-  // stub — replace with real auth signOut in future ticket
-}
-
 interface TopbarProps {
   tenantName?: string;
   onMenuClick?: () => void;
@@ -46,7 +42,7 @@ interface TopbarProps {
 
 export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
   const { theme, setTheme } = useTheme();
-  const router = useRouter();
+  const { logout } = useAuth();
   const user = useUser();
   const currentTheme = (theme as ThemeKey | undefined) ?? 'system';
 
@@ -121,8 +117,7 @@ export function Topbar({ tenantName = 'Maco', onMenuClick }: TopbarProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
-                signOut();
-                router.push('/login');
+                void logout();
               }}
             >
               Sair

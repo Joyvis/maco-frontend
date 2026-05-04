@@ -114,27 +114,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [accessToken, user, logout]);
 
-  // On mount: try to restore session via refresh cookie
+  // On mount: try to restore session.
+  // Prefer the existing access_token cookie (cheap, idempotent) and only fall
+  // back to refresh-token rotation when the access token is missing/expired.
+  // Calling /api/auth/refresh on every page load would rotate the refresh
+  // token; on rapid reloads the browser aborts the in-flight fetch before it
+  // commits the new cookie, leaving the user with a stale, already-invalidated
+  // refresh token.
   useEffect(() => {
     mountedRef.current = true;
 
     (async () => {
       try {
-        const r = await fetch('/api/auth/refresh', { method: 'POST' });
-        if (!r.ok) return;
-        const d = (await r.json()) as {
-          access_token: string;
-          expires_in: number;
-        };
+        let tokens: { access_token: string; expires_in: number } | null = null;
+
+        const sessionRes = await fetch('/api/auth/session');
+        if (sessionRes.ok) {
+          tokens = (await sessionRes.json()) as {
+            access_token: string;
+            expires_in: number;
+          };
+        } else {
+          const refreshRes = await fetch('/api/auth/refresh', {
+            method: 'POST',
+          });
+          if (!refreshRes.ok) return;
+          tokens = (await refreshRes.json()) as {
+            access_token: string;
+            expires_in: number;
+          };
+        }
+
         const meR = await fetch(`${env.NEXT_PUBLIC_API_URL}/users/me`, {
-          headers: { Authorization: `Bearer ${d.access_token}` },
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
         });
         if (!meR.ok) return;
         const userData = (await meR.json()) as User;
         if (mountedRef.current) {
           setUser(userData);
-          setAccessToken(d.access_token);
-          scheduleRefreshRef.current(d.expires_in);
+          setAccessToken(tokens.access_token);
+          scheduleRefreshRef.current(tokens.expires_in);
         }
       } catch {
         // Network error or configureAuth setup failure — fall through and

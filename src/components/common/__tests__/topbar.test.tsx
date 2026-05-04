@@ -22,10 +22,15 @@ function renderTopbar(
 }
 
 const mockPush = vi.fn();
+const mockLogout = vi.fn();
 
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn().mockReturnValue('/dashboard'),
   useRouter: vi.fn(() => ({ push: mockPush })),
+}));
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: vi.fn(() => ({ logout: mockLogout })),
 }));
 
 vi.mock('next-themes', () => ({
@@ -37,6 +42,7 @@ const mockUseTheme = useTheme as MockedFunction<typeof useTheme>;
 describe('Topbar', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockLogout.mockClear();
     mockUseTheme.mockReturnValue({
       theme: 'light',
       setTheme: vi.fn(),
@@ -91,11 +97,11 @@ describe('Topbar', () => {
     expect(setTheme).toHaveBeenCalledWith('system');
   });
 
-  it('navigates to /login when Sair is selected', async () => {
+  it('calls logout when Sair is selected', async () => {
     renderTopbar();
     await userEvent.click(screen.getByRole('button', { name: /user menu/i }));
     await userEvent.click(screen.getByText('Sair'));
-    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 
   it('renders avatar fallback initials from the provided user name', () => {

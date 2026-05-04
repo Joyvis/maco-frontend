@@ -144,7 +144,8 @@ describe('AC-1: login() updates auth state', () => {
     // Mount: no session
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
+      .mockResolvedValueOnce(fetchFail(401)) // mount session fails
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fallback fails
       .mockResolvedValueOnce(
         // login
         fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 }),
@@ -177,7 +178,8 @@ describe('AC-2: login() throws on invalid credentials', () => {
   it('throws Error with backend message on 401', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(fetchFail(401)) // mount refresh
+      .mockResolvedValueOnce(fetchFail(401)) // mount session
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fallback
       .mockResolvedValueOnce(fetchFail(401)); // login
 
     let caughtMessage = '';
@@ -520,7 +522,8 @@ describe('configureAuth setup error scenarios', () => {
 
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fails
+      .mockResolvedValueOnce(fetchFail(401)) // mount session fails
+      .mockResolvedValueOnce(fetchFail(401)) // mount refresh fallback fails
       .mockResolvedValueOnce(
         fetchOk({ user: MOCK_USER, access_token: 'tok-abc', expires_in: 900 }),
       ); // login
