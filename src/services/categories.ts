@@ -20,7 +20,8 @@ export const categoryKeys = {
 export function useCategories() {
   const { data, ...rest } = useQuery({
     queryKey: categoryKeys.lists(),
-    queryFn: () => apiClient.get<ApiResponse<Category[]>>('/categories'),
+    queryFn: () =>
+      apiClient.get<ApiResponse<Category[]>>('/catalog/categories'),
   });
   return { data: data?.data ?? [], ...rest };
 }
@@ -29,7 +30,7 @@ export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateCategoryInput) =>
-      apiClient.post<ApiResponse<Category>>('/categories', input),
+      apiClient.post<ApiResponse<Category>>('/catalog/categories', input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
@@ -40,7 +41,10 @@ export function useUpdateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateCategoryInput }) =>
-      apiClient.patch<ApiResponse<Category>>(`/categories/${id}`, input),
+      apiClient.patch<ApiResponse<Category>>(
+        `/catalog/categories/${id}`,
+        input,
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
@@ -51,7 +55,7 @@ export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.delete<ApiResponse<void>>(`/categories/${id}`),
+      apiClient.delete<ApiResponse<void>>(`/catalog/categories/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
@@ -62,7 +66,9 @@ export function useReorderCategories() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (items: Array<{ id: string; display_order: number }>) =>
-      apiClient.put<ApiResponse<void>>('/categories/reorder', { items }),
+      apiClient.put<ApiResponse<void>>('/catalog/categories/reorder', {
+        items,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
