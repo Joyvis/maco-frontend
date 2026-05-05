@@ -41,7 +41,7 @@ export function useServices(
   return usePaginatedQuery<Service>(
     (params) => serviceKeys.list({ ...filters, ...params }),
     (params) =>
-      apiClient.get<PaginatedResponse<Service>>('/services', {
+      apiClient.get<PaginatedResponse<Service>>('/catalog/services', {
         ...filters,
         ...params,
       }),
@@ -52,7 +52,8 @@ export function useServices(
 export function useService(id: string) {
   const { data, ...rest } = useQuery({
     queryKey: serviceKeys.detail(id),
-    queryFn: () => apiClient.get<ApiResponse<Service>>(`/services/${id}`),
+    queryFn: () =>
+      apiClient.get<ApiResponse<Service>>(`/catalog/services/${id}`),
     enabled: Boolean(id),
   });
   return { data: data?.data, ...rest };
@@ -62,7 +63,7 @@ export function useAllServices() {
   const { data, ...rest } = useQuery({
     queryKey: [...serviceKeys.lists(), { page_size: 100 }],
     queryFn: () =>
-      apiClient.get<PaginatedResponse<Service>>('/services', {
+      apiClient.get<PaginatedResponse<Service>>('/catalog/services', {
         page_size: 100,
       }),
   });
@@ -73,7 +74,7 @@ export function useCreateService() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateServiceInput) =>
-      apiClient.post<ApiResponse<Service>>('/services', input),
+      apiClient.post<ApiResponse<Service>>('/catalog/services', input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
     },
@@ -84,7 +85,7 @@ export function useUpdateService(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateServiceInput) =>
-      apiClient.patch<ApiResponse<Service>>(`/services/${id}`, input),
+      apiClient.patch<ApiResponse<Service>>(`/catalog/services/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(id) });
@@ -96,7 +97,7 @@ export function useActivateService() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.post<ApiResponse<Service>>(`/services/${id}/activate`),
+      apiClient.post<ApiResponse<Service>>(`/catalog/services/${id}/activate`),
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(id) });
@@ -108,7 +109,7 @@ export function useArchiveService() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.post<ApiResponse<Service>>(`/services/${id}/archive`),
+      apiClient.post<ApiResponse<Service>>(`/catalog/services/${id}/archive`),
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(id) });
@@ -121,7 +122,7 @@ export function useConsumptions(serviceId: string) {
     queryKey: consumptionKeys.all(serviceId),
     queryFn: () =>
       apiClient.get<ApiResponse<ServiceConsumption[]>>(
-        `/services/${serviceId}/consumptions`,
+        `/catalog/services/${serviceId}/consumptions`,
       ),
     enabled: Boolean(serviceId),
   });
@@ -133,7 +134,7 @@ export function useAddConsumption(serviceId: string) {
   return useMutation({
     mutationFn: (input: AddConsumptionInput) =>
       apiClient.post<ApiResponse<ServiceConsumption>>(
-        `/services/${serviceId}/consumptions`,
+        `/catalog/services/${serviceId}/consumptions`,
         input,
       ),
     onSuccess: () => {
@@ -149,7 +150,7 @@ export function useRemoveConsumption(serviceId: string) {
   return useMutation({
     mutationFn: (productId: string) =>
       apiClient.delete<ApiResponse<null>>(
-        `/services/${serviceId}/consumptions/${productId}`,
+        `/catalog/services/${serviceId}/consumptions/${productId}`,
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -164,7 +165,7 @@ export function useDependencies(serviceId: string) {
     queryKey: dependencyKeys.all(serviceId),
     queryFn: () =>
       apiClient.get<ApiResponse<ServiceDependency[]>>(
-        `/services/${serviceId}/dependencies`,
+        `/catalog/services/${serviceId}/dependencies`,
       ),
     enabled: Boolean(serviceId),
   });
@@ -176,7 +177,7 @@ export function useAddDependency(serviceId: string) {
   return useMutation({
     mutationFn: (input: AddDependencyInput) =>
       apiClient.post<ApiResponse<ServiceDependency>>(
-        `/services/${serviceId}/dependencies`,
+        `/catalog/services/${serviceId}/dependencies`,
         input,
       ),
     onSuccess: () => {
@@ -192,7 +193,7 @@ export function useRemoveDependency(serviceId: string) {
   return useMutation({
     mutationFn: (dependencyId: string) =>
       apiClient.delete<ApiResponse<null>>(
-        `/services/${serviceId}/dependencies/${dependencyId}`,
+        `/catalog/services/${serviceId}/dependencies/${dependencyId}`,
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({

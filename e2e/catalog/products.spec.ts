@@ -3,8 +3,10 @@ import { test, expect } from '@playwright/test';
 const EMAIL = 'owner@acme.test';
 const PASSWORD = 'Passw0rd!';
 
-test.describe('catalog / products create', () => {
-  test('creates a product and shows it on the list page', async ({ page }) => {
+test.describe('catalog / products', () => {
+  test('lists products, creates a new one, and shows it on the list', async ({
+    page,
+  }) => {
     await page.goto('/login');
 
     await page.getByLabel('E-mail').fill(EMAIL);
@@ -13,15 +15,43 @@ test.describe('catalog / products create', () => {
 
     await page.waitForURL(/\/dashboard/, { timeout: 10_000 });
 
-    const productName = `E2E Produto ${Date.now()}`;
-    const basePrice = '19.90';
+    await page.goto('/catalogo/produtos');
+    await page.waitForURL(/\/catalogo\/produtos$/);
 
-    await page.goto('/catalogo/produtos/new');
-    await page.waitForURL(/\/catalogo\/produtos\/new/);
+    await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible();
+    await expect(page.getByLabel('Filtrar por status')).toBeVisible();
+    await expect(page.getByLabel('Filtrar por categoria')).toBeVisible();
 
+    await expect(page.getByText('Carregando...')).toHaveCount(0, {
+      timeout: 10_000,
+    });
+
+    const table = page.getByRole('table');
+    await expect(table).toBeVisible();
+    for (const header of [
+      'Nome',
+      'Categoria',
+      'Unidade',
+      'Status',
+      'Preço',
+      'Criado em',
+    ]) {
+      await expect(
+        table.getByRole('columnheader', { name: header }),
+      ).toBeVisible();
+    }
+
+    const newProductLink = page.getByRole('link', { name: 'Novo Produto' });
+    await expect(newProductLink).toBeVisible();
+    await newProductLink.click();
+
+    await page.waitForURL(/\/catalogo\/produtos\/new$/, { timeout: 10_000 });
     await expect(
       page.getByRole('heading', { name: 'Novo Produto' }),
     ).toBeVisible();
+
+    const productName = `E2E Produto ${Date.now()}`;
+    const basePrice = '19.90';
 
     await page.getByLabel('Nome').fill(productName);
     await page.getByLabel('Descrição').fill('Produto criado pelo teste e2e');
@@ -30,15 +60,11 @@ test.describe('catalog / products create', () => {
     await page.getByRole('button', { name: 'Salvar' }).click();
 
     await page.waitForURL(/\/catalogo\/produtos$/, { timeout: 10_000 });
-
     await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible();
 
     await expect(page.getByText('Carregando...')).toHaveCount(0, {
       timeout: 10_000,
     });
-
-    const table = page.getByRole('table');
-    await expect(table).toBeVisible();
 
     await page.getByPlaceholder('Filtrar...').fill(productName);
 
