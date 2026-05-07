@@ -16,4 +16,6 @@ export const MOCK_PERMISSIONS: Permission[] = [
   'qualifications:read',
   'qualifications:create',
   'qualifications:delete',
+  'schedules:read',
+  'schedules:write',
 ];
