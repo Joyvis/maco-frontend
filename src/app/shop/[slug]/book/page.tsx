@@ -1,5 +1,8 @@
-import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { notFound, redirect } from 'next/navigation';
 
+import { COOKIE_ACCESS_TOKEN } from '@/lib/auth/cookies';
+import { decodeToken, isTokenExpired } from '@/lib/auth/jwt';
 import { fetchShopProfile } from '@/services/shop';
 import { BookingWizard } from '@/components/common/booking-wizard';
 
@@ -16,6 +19,15 @@ export default async function BookPage({
   const { service_id: serviceId } = await searchParams;
 
   if (!serviceId) notFound();
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_ACCESS_TOKEN)?.value;
+  const payload = token ? decodeToken(token) : null;
+  if (!payload || isTokenExpired(payload)) {
+    redirect(
+      `/login?returnTo=${encodeURIComponent(`/shop/${slug}/book?service_id=${serviceId}`)}`,
+    );
+  }
 
   const shop = await fetchShopProfile(slug);
   if (!shop) notFound();

@@ -3,9 +3,8 @@
 import { User } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { ANY_STAFF_ID } from '@/types/booking';
 import type { QualifiedStaff } from '@/types/qualification';
-
-const ANY_STAFF_ID = 'any';
 
 interface StaffPickerGridProps {
   staff: QualifiedStaff[];

@@ -1,3 +1,5 @@
+export const ANY_STAFF_ID = 'any';
+
 export interface TimeSlot {
   date: string;
   start_time: string;

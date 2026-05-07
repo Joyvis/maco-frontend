@@ -26,6 +26,10 @@ vi.mock('@/services/qualifications', () => ({
   useQualifiedStaff: vi.fn(),
 }));
 
+vi.mock('@/services/services', () => ({
+  useDependencies: vi.fn(),
+}));
+
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -64,18 +68,23 @@ const PROPS = {
 async function importMocks() {
   const booking = await import('@/services/booking');
   const qualifications = await import('@/services/qualifications');
-  return { booking, qualifications };
+  const services = await import('@/services/services');
+  return { booking, qualifications, services };
 }
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  const { booking, qualifications } = await importMocks();
+  const { booking, qualifications, services } = await importMocks();
   (booking.useAvailability as Mock).mockReturnValue({
     data: [],
     isLoading: false,
   });
   (qualifications.useQualifiedStaff as Mock).mockReturnValue({
     data: MOCK_STAFF,
+    isLoading: false,
+  });
+  (services.useDependencies as Mock).mockReturnValue({
+    data: [],
     isLoading: false,
   });
 });
@@ -260,5 +269,46 @@ describe('BookingWizard — confirmation and submission', () => {
     await waitFor(() =>
       expect(screen.getByText(/data e horário/i)).toBeInTheDocument(),
     );
+  });
+
+  it('shows generic error toast and stays on confirmation when a network error occurs', async () => {
+    const { toast } = await import('sonner');
+    await navigateToConfirmation();
+    mockMutateAsync.mockRejectedValue(
+      new Error('Network error. Check your connection.'),
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /confirmar agendamento/i }),
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining('Não foi possível confirmar'),
+      );
+    });
+
+    expect(screen.getByText(/confirmação/i)).toBeInTheDocument();
+    expect(screen.queryByText(/data e horário/i)).not.toBeInTheDocument();
+  });
+
+  it('shows auto-include dependencies with "(incluído)" label in confirmation', async () => {
+    const { services } = await importMocks();
+    (services.useDependencies as Mock).mockReturnValue({
+      data: [
+        {
+          id: 'dep-1',
+          service_id: 'svc-2',
+          service_name: 'Lavagem',
+          auto_include: true,
+        },
+      ],
+      isLoading: false,
+    });
+
+    await navigateToConfirmation();
+
+    expect(screen.getByText('Lavagem')).toBeInTheDocument();
+    expect(screen.getByText('(incluído)')).toBeInTheDocument();
   });
 });

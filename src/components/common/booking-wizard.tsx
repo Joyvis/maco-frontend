@@ -7,7 +7,9 @@ import { ChevronLeft } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAvailability, useCreateBooking } from '@/services/booking';
+import { useDependencies } from '@/services/services';
 import { useQualifiedStaff } from '@/services/qualifications';
+import { ANY_STAFF_ID } from '@/types/booking';
 import type { TimeSlot, BookingItem } from '@/types/booking';
 
 import { CalendarStrip } from './calendar-strip';
@@ -24,8 +26,6 @@ interface BookingWizardProps {
   shopSlug: string;
   items?: BookingItem[];
 }
-
-const ANY_STAFF_ID = 'any';
 
 function todayDate(): Date {
   const d = new Date();
@@ -58,6 +58,8 @@ export function BookingWizard({
 
   const { data: staff = [], isLoading: staffLoading } =
     useQualifiedStaff(serviceId);
+
+  const { data: dependencies = [] } = useDependencies(serviceId);
 
   const availableDates = Array.from(
     new Set(slots.filter((s) => s.available).map((s) => s.date)),
@@ -94,18 +96,38 @@ export function BookingWizard({
       } else {
         router.push(`/booking/${booking.id}/success`);
       }
-    } catch {
-      toast.error(
-        'Este horário não está mais disponível. Por favor, selecione outro horário.',
-      );
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setStep(1);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '';
+      const isInfraError =
+        message.startsWith('Network error') ||
+        message.startsWith('Something went wrong') ||
+        message.startsWith('Session expired');
+      if (isInfraError) {
+        toast.error(
+          'Não foi possível confirmar o agendamento. Tente novamente.',
+        );
+      } else {
+        toast.error(
+          'Este horário não está mais disponível. Por favor, selecione outro horário.',
+        );
+        setSelectedSlot(null);
+        setSelectedDate(null);
+        setStep(1);
+      }
     }
   }
 
   const canProceedFromStep1 = selectedDate !== null && selectedSlot !== null;
   const canProceedFromStep2 = selectedStaffId !== null;
+
+  const autoIncludeItems: BookingItem[] = dependencies
+    .filter((dep) => dep.auto_include)
+    .map((dep) => ({
+      service_id: dep.service_id,
+      service_name: dep.service_name ?? dep.service_id,
+      price: 0,
+      included: true,
+    }));
 
   const displayItems: BookingItem[] =
     items.length > 0
@@ -117,6 +139,7 @@ export function BookingWizard({
             price: servicePrice,
             included: false,
           },
+          ...autoIncludeItems,
         ];
 
   return (

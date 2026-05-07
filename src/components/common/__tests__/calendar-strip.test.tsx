@@ -4,13 +4,21 @@ import userEvent from '@testing-library/user-event';
 
 import { CalendarStrip } from '../calendar-strip';
 
-const TODAY = new Date('2025-01-15');
+// Use Date(year, month, day) to construct in local time — toISOString() returns UTC which shifts day in non-UTC zones
+const TODAY = new Date(2025, 0, 15);
+
+function toLocalIso(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 function makeDates(count: number): string[] {
   return Array.from({ length: count }, (_, i) => {
     const d = new Date(TODAY);
     d.setDate(TODAY.getDate() + i);
-    return d.toISOString().slice(0, 10);
+    return toLocalIso(d);
   });
 }
 
