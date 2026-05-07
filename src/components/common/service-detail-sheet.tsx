@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import {
   Dialog,
@@ -15,16 +16,25 @@ import { formatPrice, formatDuration } from './service-card';
 
 interface ServiceDetailSheetProps {
   service: ShopService | null;
+  shopSlug: string;
   open: boolean;
   onClose: () => void;
 }
 
 export function ServiceDetailSheet({
   service,
+  shopSlug,
   open,
   onClose,
 }: ServiceDetailSheetProps) {
+  const router = useRouter();
+
   if (!service) return null;
+
+  function handleBook() {
+    router.push(`/shop/${shopSlug}/book?service_id=${service!.id}`);
+    onClose();
+  }
 
   return (
     <Dialog
@@ -50,7 +60,9 @@ export function ServiceDetailSheet({
           <p className="text-lg font-semibold">
             {formatPrice(service.base_price)}
           </p>
-          <Button className="w-full">Agendar Agora</Button>
+          <Button className="w-full" onClick={handleBook}>
+            Agendar Agora
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
