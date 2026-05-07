@@ -41,6 +41,7 @@ export default function NewOrderPage() {
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [committedItems, setCommittedItems] = useState<SaleOrderItem[]>([]);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [prepaymentRequired, setPrepaymentRequired] = useState(false);
 
   const { data: catalogItems, isLoading: catalogLoading } =
     useAllCatalogItems();
@@ -84,6 +85,7 @@ export default function NewOrderPage() {
     try {
       const result = await createOrder({ customer_name: customerName.trim() });
       setOrderId(result.data.id);
+      setPrepaymentRequired(result.data.prepayment_required);
       setStep(2);
     } catch {
       toast.error('Erro ao criar ordem. Tente novamente.');
@@ -288,6 +290,12 @@ export default function NewOrderPage() {
             <div className="flex justify-between text-sm">
               <span className="font-medium">Status</span>
               <OrderStatusBadge state="confirmed" />
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">Pagamento antecipado</span>
+              <span>
+                {prepaymentRequired ? 'Necessário' : 'Não necessário'}
+              </span>
             </div>
             {committedItems.length > 0 && (
               <div className="space-y-1">

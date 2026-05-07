@@ -14,6 +14,8 @@ const STATE_CLASSES: Record<SaleOrderState, string> = {
   completed: 'border-green-500 text-green-600 dark:text-green-400',
   cancelled: 'border-muted-foreground/40 text-muted-foreground',
   no_show: 'border-red-500 text-red-600 dark:text-red-400',
+  pending_payment: 'border-orange-500 text-orange-600 dark:text-orange-400',
+  pending_checkout: 'border-orange-500 text-orange-600 dark:text-orange-400',
 };
 
 export function OrderStatusBadge({ state }: OrderStatusBadgeProps) {

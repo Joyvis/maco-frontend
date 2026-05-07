@@ -8,6 +8,8 @@ export const SALE_ORDER_STATE_LABELS: Record<SaleOrderState, string> = {
   completed: 'Concluído',
   cancelled: 'Cancelado',
   no_show: 'Não Compareceu',
+  pending_payment: 'Aguardando Pagamento',
+  pending_checkout: 'Aguardando Checkout',
 };
 
 export type OrderItemType = 'service' | 'product';

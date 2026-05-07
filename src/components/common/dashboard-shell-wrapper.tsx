@@ -24,7 +24,7 @@ export function DashboardShellWrapper({
   }
 
   return (
-    <UserProvider value={{ name: user.name, email: user.email }}>
+    <UserProvider value={{ id: user.id, name: user.name, email: user.email }}>
       <PermissionsProvider>
         <TooltipProvider>
           <DashboardShell>{children}</DashboardShell>

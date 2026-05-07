@@ -4,7 +4,9 @@ export type SaleOrderState =
   | 'in_progress'
   | 'completed'
   | 'cancelled'
-  | 'no_show';
+  | 'no_show'
+  | 'pending_payment'
+  | 'pending_checkout';
 
 export interface SaleOrder {
   id: string;

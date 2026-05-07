@@ -19,6 +19,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useSaleOrders } from '@/services/sale-orders';
 import { useUsers } from '@/services/users';
+import { usePermissions } from '@/providers/permissions-provider';
+import { useUser } from '@/providers/user-provider';
 import { SALE_ORDER_STATE_LABELS } from '@/types/sale-order';
 import type { ManagedSaleOrder, SaleOrderState } from '@/types/sale-order';
 
@@ -78,10 +80,16 @@ const ALL_STATES: SaleOrderState[] = [
 ];
 
 export default function OrdersPage() {
+  const { hasPermission } = usePermissions();
+  const user = useUser();
+  const isAdmin = hasPermission('settings:admin');
+
   const [stateFilter, setStateFilter] = useState<SaleOrderState | 'all'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [staffFilter, setStaffFilter] = useState<string>('all');
+  const [staffFilter, setStaffFilter] = useState<string>(
+    isAdmin ? 'all' : (user.id ?? 'all'),
+  );
   const [search, setSearch] = useState('');
 
   const { data, isLoading } = useSaleOrders({
@@ -146,7 +154,11 @@ export default function OrdersPage() {
           aria-label="Data fim"
         />
 
-        <Select value={staffFilter} onValueChange={setStaffFilter}>
+        <Select
+          value={staffFilter}
+          onValueChange={setStaffFilter}
+          disabled={!isAdmin}
+        >
           <SelectTrigger className="w-44" aria-label="Filtrar por colaborador">
             <SelectValue placeholder="Colaborador" />
           </SelectTrigger>

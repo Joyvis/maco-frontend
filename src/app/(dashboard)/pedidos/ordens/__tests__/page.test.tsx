@@ -17,6 +17,21 @@ vi.mock('@/services/users', () => ({
   useUsers: vi.fn(),
 }));
 
+vi.mock('@/providers/permissions-provider', () => ({
+  usePermissions: vi.fn(() => ({
+    permissions: ['settings:admin'],
+    hasPermission: (p: string) => p === 'settings:admin',
+  })),
+}));
+
+vi.mock('@/providers/user-provider', () => ({
+  useUser: vi.fn(() => ({
+    id: 'admin-1',
+    name: 'Admin',
+    email: 'admin@maco.app',
+  })),
+}));
+
 const mockOrderConfirmed: ManagedSaleOrder = {
   id: 'order-1',
   order_number: '001',
@@ -165,5 +180,39 @@ describe('OrdersPage', () => {
     const searchInput = screen.getByPlaceholderText(/buscar por cliente/i);
     await userEvent.type(searchInput, 'test');
     expect(searchInput).toHaveValue('test');
+  });
+
+  it('passes staff_id to useSaleOrders when user is not admin', async () => {
+    const { usePermissions } = await vi.importMock<{
+      usePermissions: ReturnType<typeof vi.fn>;
+    }>('@/providers/permissions-provider');
+    const { useUser } = await vi.importMock<{
+      useUser: ReturnType<typeof vi.fn>;
+    }>('@/providers/user-provider');
+    const { useSaleOrders } = await vi.importMock<{
+      useSaleOrders: ReturnType<typeof vi.fn>;
+    }>('@/services/sale-orders');
+    const { useUsers } = await vi.importMock<{
+      useUsers: ReturnType<typeof vi.fn>;
+    }>('@/services/users');
+
+    usePermissions.mockReturnValue({
+      permissions: ['orders:read'],
+      hasPermission: () => false,
+    });
+    useUser.mockReturnValue({
+      id: 'staff-42',
+      name: 'Staff',
+      email: 'staff@maco.app',
+    });
+    useSaleOrders.mockReturnValue({ data: [], isLoading: false });
+    useUsers.mockReturnValue({ data: [], isLoading: false });
+
+    const { default: OrdersPage } = await import('../page');
+    render(<OrdersPage />);
+
+    expect(useSaleOrders).toHaveBeenCalledWith(
+      expect.objectContaining({ staff_id: 'staff-42' }),
+    );
   });
 });

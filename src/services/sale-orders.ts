@@ -1,5 +1,3 @@
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiClient } from '@/services/api-client';
@@ -102,6 +100,25 @@ export function useClaimSaleOrder() {
       apiClient.post<ApiResponse<ManagedSaleOrder>>(
         `/sale-orders/${orderId}/claim`,
       ),
+    onMutate: async (orderId) => {
+      await queryClient.cancelQueries({ queryKey: saleOrderKeys.pool() });
+      const previous = queryClient.getQueryData<
+        PaginatedResponse<ManagedSaleOrder>
+      >(saleOrderKeys.pool());
+      queryClient.setQueryData<PaginatedResponse<ManagedSaleOrder>>(
+        saleOrderKeys.pool(),
+        (old) => {
+          if (!old) return old;
+          return { ...old, data: old.data.filter((o) => o.id !== orderId) };
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _orderId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(saleOrderKeys.pool(), context.previous);
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: saleOrderKeys.pool() });
       void queryClient.invalidateQueries({ queryKey: saleOrderKeys.lists() });
@@ -132,7 +149,7 @@ export function useAllCatalogItems() {
     queryFn: () =>
       apiClient.get<
         PaginatedResponse<{ id: string; name: string; price: number }>
-      >('/catalog/services', { page: 1, page_size: 100 }),
+      >('/services', { page: 1, page_size: 100 }),
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -140,7 +157,7 @@ export function useAllCatalogItems() {
     queryFn: () =>
       apiClient.get<
         PaginatedResponse<{ id: string; name: string; base_price: number }>
-      >('/catalog/products', { page: 1, page_size: 100 }),
+      >('/products', { page: 1, page_size: 100 }),
   });
 
   const items: CatalogItem[] = [

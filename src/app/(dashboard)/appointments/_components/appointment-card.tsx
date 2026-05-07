@@ -29,6 +29,8 @@ const STATE_LABELS: Record<SaleOrderState, string> = {
   completed: 'Concluído',
   cancelled: 'Cancelado',
   no_show: 'Não compareceu',
+  pending_payment: 'Aguardando Pagamento',
+  pending_checkout: 'Aguardando Checkout',
 };
 
 function statusVariant(

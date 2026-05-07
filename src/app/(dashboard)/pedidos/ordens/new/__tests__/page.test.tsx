@@ -26,6 +26,11 @@ const mockOrder: ManagedSaleOrder = {
   created_at: '2024-01-01T00:00:00Z',
 };
 
+const mockOrderWithPrepayment: ManagedSaleOrder = {
+  ...mockOrder,
+  prepayment_required: true,
+};
+
 const mockCatalogItems: CatalogItem[] = [
   { id: 'svc-1', name: 'Corte de Cabelo', type: 'service', price: 50 },
   { id: 'prod-1', name: 'Shampoo Premium', type: 'product', price: 30 },
@@ -255,5 +260,105 @@ describe('NewOrderPage — Step 3 (Review)', () => {
   it('shows confirmed status badge in review', async () => {
     await goToStep3();
     expect(screen.getByText('Confirmado')).toBeInTheDocument();
+  });
+
+  it('shows prepayment not required when order has prepayment_required false', async () => {
+    await goToStep3();
+    expect(screen.getByText('Não necessário')).toBeInTheDocument();
+  });
+
+  it('shows prepayment required when order has prepayment_required true', async () => {
+    const { useCreateSaleOrder, useAddOrderItem, useAllCatalogItems } =
+      await vi.importMock<{
+        useCreateSaleOrder: ReturnType<typeof vi.fn>;
+        useAddOrderItem: ReturnType<typeof vi.fn>;
+        useAllCatalogItems: ReturnType<typeof vi.fn>;
+      }>('@/services/sale-orders');
+
+    useCreateSaleOrder.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ data: mockOrderWithPrepayment }),
+      isPending: false,
+    });
+    useAddOrderItem.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({
+        data: {
+          ...mockOrderWithPrepayment,
+          items: [
+            {
+              id: 'item-1',
+              name: 'Corte de Cabelo',
+              type: 'service',
+              price: 50,
+              quantity: 1,
+            },
+          ],
+        },
+      }),
+      isPending: false,
+    });
+    useAllCatalogItems.mockReturnValue({
+      data: mockCatalogItems,
+      isLoading: false,
+    });
+
+    const { default: NewOrderPage } = await import('../page');
+    render(<NewOrderPage />);
+
+    const input = screen.getByLabelText(/nome do cliente/i);
+    await userEvent.type(input, 'Pedro Alves');
+    await userEvent.click(screen.getByRole('button', { name: /próximo/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/passo 2/i)).toBeInTheDocument(),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /adicionar corte de cabelo/i }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /próximo/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/passo 3/i)).toBeInTheDocument(),
+    );
+
+    expect(screen.getByText('Necessário')).toBeInTheDocument();
+  });
+});
+
+describe('NewOrderPage — Total update', () => {
+  it('updates total when item is added then removed', async () => {
+    const { useCreateSaleOrder, useAddOrderItem, useAllCatalogItems } =
+      await vi.importMock<{
+        useCreateSaleOrder: ReturnType<typeof vi.fn>;
+        useAddOrderItem: ReturnType<typeof vi.fn>;
+        useAllCatalogItems: ReturnType<typeof vi.fn>;
+      }>('@/services/sale-orders');
+
+    useCreateSaleOrder.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ data: mockOrder }),
+      isPending: false,
+    });
+    useAddOrderItem.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+    useAllCatalogItems.mockReturnValue({
+      data: mockCatalogItems,
+      isLoading: false,
+    });
+
+    const { default: NewOrderPage } = await import('../page');
+    render(<NewOrderPage />);
+
+    const input = screen.getByLabelText(/nome do cliente/i);
+    await userEvent.type(input, 'Pedro Alves');
+    await userEvent.click(screen.getByRole('button', { name: /próximo/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/passo 2/i)).toBeInTheDocument(),
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /adicionar corte de cabelo/i }),
+    );
+    expect(screen.getByText('Itens adicionados')).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /remover corte de cabelo/i }),
+    );
+    expect(screen.queryByText('Itens adicionados')).not.toBeInTheDocument();
   });
 });
