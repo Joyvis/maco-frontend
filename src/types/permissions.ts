@@ -13,4 +13,6 @@ export type Permission =
   | 'settings:admin'
   | 'qualifications:read'
   | 'qualifications:create'
-  | 'qualifications:delete';
+  | 'qualifications:delete'
+  | 'schedules:read'
+  | 'schedules:write';
