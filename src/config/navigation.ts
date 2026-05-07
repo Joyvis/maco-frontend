@@ -5,6 +5,7 @@ import {
   Users,
   Settings,
   CalendarDays,
+  CalendarCheck,
 } from 'lucide-react';
 
 import type { NavItem } from '@/types/navigation';
@@ -56,6 +57,12 @@ export const NAV_ITEMS: NavItem[] = [
     requiredPermission: 'schedules:read',
   },
   {
+    label: 'Meus Agendamentos',
+    href: '/appointments',
+    icon: CalendarCheck,
+    requiredPermission: 'appointments:read',
+  },
+  {
     label: 'Configurações',
     href: '/configuracoes',
     icon: Settings,
@@ -85,6 +92,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   tenant: 'Tenant',
   pagamentos: 'Políticas de Pagamento',
   schedules: 'Agenda',
+  appointments: 'Meus Agendamentos',
   perfil: 'Perfil',
   novo: 'Novo Usuário',
   convidar: 'Convidar Usuário',

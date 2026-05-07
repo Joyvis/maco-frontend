@@ -15,4 +15,5 @@ export type Permission =
   | 'qualifications:create'
   | 'qualifications:delete'
   | 'schedules:read'
-  | 'schedules:write';
+  | 'schedules:write'
+  | 'appointments:read';
