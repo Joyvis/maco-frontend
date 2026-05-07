@@ -1,127 +1,219 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { AdminSaleOrder } from '@/types/order';
+import type { ManagedSaleOrder } from '@/types/sale-order';
 
+// Required by the child DataTable component (data-table.tsx:54-56), not OrdersPage directly.
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
   usePathname: vi.fn().mockReturnValue('/pedidos/ordens'),
   useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
-vi.mock('@/services/orders', () => ({
-  useOrders: vi.fn(),
+vi.mock('@/services/sale-orders', () => ({
+  useSaleOrders: vi.fn(),
 }));
 
-const mockConfirmedOrder: AdminSaleOrder = {
-  id: 'ord-1',
-  order_number: 'ORD-001',
+vi.mock('@/services/users', () => ({
+  useUsers: vi.fn(),
+}));
+
+vi.mock('@/providers/permissions-provider', () => ({
+  usePermissions: vi.fn(() => ({
+    permissions: ['settings:admin'],
+    hasPermission: (p: string) => p === 'settings:admin',
+  })),
+}));
+
+vi.mock('@/providers/user-provider', () => ({
+  useUser: vi.fn(() => ({
+    id: 'admin-1',
+    name: 'Admin',
+    email: 'admin@maco.app',
+  })),
+}));
+
+const mockOrderConfirmed: ManagedSaleOrder = {
+  id: 'order-1',
+  order_number: '001',
+  customer_name: 'Maria Silva',
   state: 'confirmed',
-  customer_name: 'Ana Silva',
-  assigned_staff: 'João Barbeiro',
-  created_at: '2026-05-01T00:00:00Z',
-  balance_due: 0,
-  total_amount: 150,
+  total_amount: 150.0,
+  staff_name: 'João Costa',
+  items: [],
+  prepayment_required: false,
+  created_at: '2024-01-15T00:00:00Z',
 };
 
-const mockCompletedOrder: AdminSaleOrder = {
-  id: 'ord-2',
-  order_number: 'ORD-002',
+const mockOrderCompleted: ManagedSaleOrder = {
+  id: 'order-2',
+  order_number: '002',
+  customer_name: 'Ana Souza',
   state: 'completed',
-  customer_name: 'Carlos Mendes',
-  assigned_staff: undefined,
-  created_at: '2026-05-02T00:00:00Z',
-  balance_due: 0,
-  total_amount: 80,
+  total_amount: 200.0,
+  items: [],
+  prepayment_required: false,
+  created_at: '2024-01-16T00:00:00Z',
 };
 
-const mockCancelledOrder: AdminSaleOrder = {
-  id: 'ord-3',
-  order_number: 'ORD-003',
-  state: 'cancelled',
-  customer_name: 'Maria Souza',
-  assigned_staff: 'Lucia Estetista',
-  created_at: '2026-05-03T00:00:00Z',
-  balance_due: 0,
-  total_amount: 60,
-};
+async function setup(orders: ManagedSaleOrder[]) {
+  const { useSaleOrders } = await vi.importMock<{
+    useSaleOrders: ReturnType<typeof vi.fn>;
+  }>('@/services/sale-orders');
 
-async function setup(orders: AdminSaleOrder[]) {
-  const { useOrders } = await vi.importMock<{
-    useOrders: ReturnType<typeof vi.fn>;
-  }>('@/services/orders');
+  const { useUsers } = await vi.importMock<{
+    useUsers: ReturnType<typeof vi.fn>;
+  }>('@/services/users');
 
-  useOrders.mockReturnValue({ data: orders, isLoading: false });
+  useSaleOrders.mockReturnValue({
+    data: orders,
+    meta: { total: orders.length, page: 1, page_size: 10 },
+    isLoading: false,
+  });
 
-  const { default: OrdensPage } = await import('../page');
-  return render(<OrdensPage />);
+  useUsers.mockReturnValue({ data: [], isLoading: false });
+
+  const { default: OrdersPage } = await import('../page');
+  return render(<OrdersPage />);
 }
 
-describe('OrdensPage', () => {
+describe('OrdersPage', () => {
   it('renders customer names in the table', async () => {
-    await setup([mockConfirmedOrder, mockCompletedOrder]);
-    expect(screen.getByText('Ana Silva')).toBeInTheDocument();
-    expect(screen.getByText('Carlos Mendes')).toBeInTheDocument();
+    await setup([mockOrderConfirmed, mockOrderCompleted]);
+    expect(screen.getByText('Maria Silva')).toBeInTheDocument();
+    expect(screen.getByText('Ana Souza')).toBeInTheDocument();
   });
 
-  it('renders order numbers with # prefix', async () => {
-    await setup([mockConfirmedOrder]);
-    expect(screen.getByText('#ORD-001')).toBeInTheDocument();
+  it('renders order numbers', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(screen.getByText('001')).toBeInTheDocument();
   });
 
-  it('renders assigned staff or dash when absent', async () => {
-    await setup([mockConfirmedOrder, mockCompletedOrder]);
-    expect(screen.getByText('João Barbeiro')).toBeInTheDocument();
-    expect(screen.getByText('—')).toBeInTheDocument();
-  });
-
-  it('shows Confirmado badge for confirmed orders', async () => {
-    await setup([mockConfirmedOrder]);
+  it('shows status badge for confirmed order', async () => {
+    await setup([mockOrderConfirmed]);
     expect(screen.getByText('Confirmado')).toBeInTheDocument();
   });
 
-  it('shows Concluído badge for completed orders', async () => {
-    await setup([mockCompletedOrder]);
+  it('shows status badge for completed order', async () => {
+    await setup([mockOrderCompleted]);
     expect(screen.getByText('Concluído')).toBeInTheDocument();
   });
 
-  it('shows Cancelado badge for cancelled orders', async () => {
-    await setup([mockCancelledOrder]);
-    expect(screen.getByText('Cancelado')).toBeInTheDocument();
+  it('shows staff name when present', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(screen.getByText('João Costa')).toBeInTheDocument();
   });
 
-  it('shows total formatted as BRL currency', async () => {
-    await setup([mockConfirmedOrder]);
+  it('shows dash when staff is absent', async () => {
+    await setup([mockOrderCompleted]);
+    expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
+  it('formats total amount as BRL currency', async () => {
+    await setup([mockOrderConfirmed]);
     expect(screen.getByText(/R\$\s*150/)).toBeInTheDocument();
   });
 
-  it('shows empty state when no orders exist', async () => {
+  it('renders create order button', async () => {
+    await setup([]);
+    expect(
+      screen.getByRole('link', { name: /nova ordem/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows empty state when no orders', async () => {
     await setup([]);
     expect(
       screen.getByText(/nenhum resultado encontrado/i),
     ).toBeInTheDocument();
   });
 
-  it('shows loading text while fetching', async () => {
-    const { useOrders } = await vi.importMock<{
-      useOrders: ReturnType<typeof vi.fn>;
-    }>('@/services/orders');
-    useOrders.mockReturnValue({ data: [], isLoading: true });
+  it('renders status filter select', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(
+      screen.getByRole('combobox', { name: /filtrar por status/i }),
+    ).toBeInTheDocument();
+  });
 
-    const { default: OrdensPage } = await import('../page');
-    render(<OrdensPage />);
+  it('renders date range inputs', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(screen.getByLabelText('Data início')).toBeInTheDocument();
+    expect(screen.getByLabelText('Data fim')).toBeInTheDocument();
+  });
+
+  it('renders search input', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(
+      screen.getByPlaceholderText(/buscar por cliente/i),
+    ).toBeInTheDocument();
+  });
+
+  it('renders view detail action for each row', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(
+      screen.getByRole('link', { name: /ver detalhes/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows loading text when isLoading is true', async () => {
+    const { useSaleOrders } = await vi.importMock<{
+      useSaleOrders: ReturnType<typeof vi.fn>;
+    }>('@/services/sale-orders');
+    const { useUsers } = await vi.importMock<{
+      useUsers: ReturnType<typeof vi.fn>;
+    }>('@/services/users');
+
+    useSaleOrders.mockReturnValue({ data: [], isLoading: true });
+    useUsers.mockReturnValue({ data: [], isLoading: false });
+
+    const { default: OrdersPage } = await import('../page');
+    render(<OrdersPage />);
     expect(screen.getByText('Carregando...')).toBeInTheDocument();
   });
 
-  it('shows actions dropdown with Ver detalhes option', async () => {
-    await setup([mockConfirmedOrder]);
-    const actionButtons = screen.getAllByRole('button', { name: /ações/i });
-    await userEvent.click(actionButtons[0]!);
-    expect(screen.getByText(/ver detalhes/i)).toBeInTheDocument();
+  it('does not show non-matching customer name', async () => {
+    await setup([mockOrderConfirmed]);
+    expect(screen.queryByText('Ana Souza')).not.toBeInTheDocument();
   });
 
-  it('non-matching rows are absent after data changes', async () => {
-    await setup([mockConfirmedOrder]);
-    expect(screen.queryByText('Carlos Mendes')).toBeNull();
+  it('typing in search updates input value', async () => {
+    await setup([mockOrderConfirmed]);
+    const searchInput = screen.getByPlaceholderText(/buscar por cliente/i);
+    await userEvent.type(searchInput, 'test');
+    expect(searchInput).toHaveValue('test');
+  });
+
+  it('passes staff_id to useSaleOrders when user is not admin', async () => {
+    const { usePermissions } = await vi.importMock<{
+      usePermissions: ReturnType<typeof vi.fn>;
+    }>('@/providers/permissions-provider');
+    const { useUser } = await vi.importMock<{
+      useUser: ReturnType<typeof vi.fn>;
+    }>('@/providers/user-provider');
+    const { useSaleOrders } = await vi.importMock<{
+      useSaleOrders: ReturnType<typeof vi.fn>;
+    }>('@/services/sale-orders');
+    const { useUsers } = await vi.importMock<{
+      useUsers: ReturnType<typeof vi.fn>;
+    }>('@/services/users');
+
+    usePermissions.mockReturnValue({
+      permissions: ['orders:read'],
+      hasPermission: () => false,
+    });
+    useUser.mockReturnValue({
+      id: 'staff-42',
+      name: 'Staff',
+      email: 'staff@maco.app',
+    });
+    useSaleOrders.mockReturnValue({ data: [], isLoading: false });
+    useUsers.mockReturnValue({ data: [], isLoading: false });
+
+    const { default: OrdersPage } = await import('../page');
+    render(<OrdersPage />);
+
+    expect(useSaleOrders).toHaveBeenCalledWith(
+      expect.objectContaining({ staff_id: 'staff-42' }),
+    );
   });
 });
