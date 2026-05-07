@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import type { ManagedSaleOrder } from '@/types/sale-order';
 
+// Required by the child DataTable component (data-table.tsx:54-56), not OrdersPage directly.
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
   usePathname: vi.fn().mockReturnValue('/pedidos/ordens'),
