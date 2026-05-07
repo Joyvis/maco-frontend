@@ -77,6 +77,7 @@ export function ShopView({ shop, initialServiceId }: ShopViewProps) {
 
       <ServiceDetailSheet
         service={selectedService}
+        shopSlug={shop.slug}
         open={selectedService !== null}
         onClose={() => setSelectedService(null)}
       />

@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { ShopView } from '@/components/common/shop-view';
 import type { ShopProfile } from '@/types/shop';
 
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 const MOCK_SHOP: ShopProfile = {
   slug: 'salao-da-maria',
   name: 'Salão da Maria',
